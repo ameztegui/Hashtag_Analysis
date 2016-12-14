@@ -11,7 +11,6 @@
    
    install.packages(c("devtools", "rjson", "bit64", "httr"))
    install.packages("httpuv")
-#RESTART R session!
 
 library(devtools)
 install.packages("twitteR", dependencies=T)
