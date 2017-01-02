@@ -31,20 +31,20 @@ setup_twitter_oauth(consumerKey, consumerSecret, access_token=NULL, access_secre
 
 tweets <- searchTwitter("#CRincendios", n = 5000, 
                         since="2016-11-22", until="2016-11-30")
-saveRDS(tweets, "raw_tweets.rds")
+saveRDS(tweets, "./data/raw_tweets.rds")
 
 dt_tweets <- twListToDF(tweets)
 dt_tweets_part1 <- dt_tweets
 
 tweets_part2 <- searchTwitter("#CRincendios", n = 5000, maxID = min(dt_tweets_part1$id))
-saveRDS(tweets_part2, file = "raw_tweets_part2.rds")
+saveRDS(tweets_part2, file = "./data/raw_tweets_part2.rds")
 dt_tweets_part2 <- twListToDF(tweets_part2)
 
 dt_tweets <- rbind(dt_tweets_part1, dt_tweets_part2)
-saveRDS(dt_tweets, file = "data_frame_all_tweets.rds")
-dt_tweets <- readRDS(file = "data_frame_all_tweets.rds")
+saveRDS(dt_tweets, file = "./data/data_frame_all_tweets.rds")
+dt_tweets <- readRDS(file = "./data/data_frame_all_tweets.rds")
 
-write.csv(dt_tweets, file = "cronica_tweets.csv")
+write.csv(dt_tweets, file = "./data/cronica_tweets.csv")
 
 
 

@@ -3,14 +3,14 @@ title: "TweetsReport"
 author: "Aitor Ameztegui"
 date: "September 8, 2016"
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
 ---
 
  
 ```{r, echo=FALSE, results='hide', message=FALSE}
 
-tweets <- read.csv(file = "cronica_tweets.csv",stringsAsFactors = FALSE)
+tweets <- read.csv(file = "./data/cronica_tweets.csv",stringsAsFactors = FALSE)
 tweets$created <- as.POSIXct(tweets$created)
 
 library(dplyr)
