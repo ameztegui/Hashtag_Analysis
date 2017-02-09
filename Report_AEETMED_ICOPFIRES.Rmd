@@ -1,0 +1,486 @@
+---
+title: "TweetsReport"
+author: "Aitor Ameztegui"
+date: "February 5th, 2017"
+output:
+  html_document: default
+
+---
+
+```{r, echo=FALSE, results='hide', message=FALSE}
+
+library(knitr)
+library(tidyverse)
+library(wesanderson)
+library(shiny)
+library(lubridate)
+library(RColorBrewer)
+
+AEETMED_raw_tweets <- read_csv(file = "./data/AEETMED_df_tweets.csv")
+AEETMED_raw_tweets$created <- as_datetime(AEETMED_raw_tweets$created)
+ICOPFIRES_raw_tweets <- read_csv(file = "./data/ICOPFIRES_df_tweets.csv")
+ICOPFIRES_raw_tweets$created <- as_datetime(ICOPFIRES_raw_tweets$created)
+```
+
+La semana pasada se celebraron a la vez dos congresos a los que no me hubiera importado para nada asistir. Por un lado, se celebró en Sevilla, del 31 de enero al 4 de febrero, el [Congreso de la Asociación Española de Ecología Terrestre (AEET)](http://www.medecos-aeet-meeting2017.es/), que este año iba en conjunto con MEDECOS, el congreso que organiza la International Society of Mediterranean Ecology. Por otro lado, la Fundación Pau Costa organizaba en Barcelona ICOPFIRES, el [Congreso Internacional sobre Quemas Prescritas](http://www.paucostafoundation.org/ICoPFires/), que este año se hizo coincidir además con la [Wildland Fire Safety Summit](http://www.paucostafoundation.org/ICoPFires/wildland-fire-safety-summit/).
+
+Como os decía, hubiera encontrado cualquiera de los dos muy interesante, porque además en cualquiera de ellos tenía numerosos colegas - aunque más en Sevilla, donde además el lab estuvo representado por este póster. Por suerte, los que nos tenemos que quedar en casa tenemos hoy en día herramientas para ir siguiendo los momentos más interesantes de los congresos, y una de las más ágiles en este sentido es sin duda twitter. Los dos congresos tuvieron la buena iniciativa de definir con antelación un hashtag claro, [#AEETMED](https://twitter.com/search?q=%23AEETMED&src=tyah) para el de Sevilla, [#iCOPFires](https://twitter.com/search?q=%23icopfires&src=typd) para el de Barcelona, y así muchos pudimos seguir desde nuestro ordenador o móvil los momentos más destacados.
+
+Pero ¿cuál de los dos eventos tuvo más repercusión?¿Cuándo y quién tuiteó desde los congresos? ¿Quiénes fueron los tuiteros más activos? Es lo que me pretendo analizar hoy, aprovechando que se puede extraer fácilmente la información a partir de la API de Twitter. Antes de meternos en harina, quiero dejar claro que el código que he utilizado para descargar los tuits y analizar las tendencias no es originalmente mio, sino una adaptación de diversas fuentes, en concreto [esta](https://github.com/fmichonneau/evol2015-tweets), [esta](https://github.com/jlehtoma/iccb2015-tweets/blob/gh-pages/index.Rmd), [esta](http://rollinsonecology.com) y [esta](https://github.com/khturner/HashtagISME16) Los tweets que incluian el hashtag #AEETMED se recopilaron de ka APU de RTwitter mediante el paquete [twitteR](https://cran.r-project.org/web/packages/twitteR/index.html) y la entrada la he escrito utilizando RMarkdown, y el codigo fuente y los datos est?nAdemás, todo el código y los datos están [disponibles en mi GitHub](https://github.com/ameztegui/Hashtag_Analysis). Dicho esto, al lío.
+
+Según los organizadores, el iCOPFires acogió en total a unos 500 asistentes, mientras que AEETMED reunió a unos 600.  En cuanto a número de tuits generados la cosa anduvo bastante pareja, como se ve en esta tabla.
+
+```{r echo=F}
+
+# De momento, no tengamos en cuenta los tweets generados antes de la emision del documental
+AEETMED_tweets <- AEETMED_raw_tweets %>%
+        filter(!screenName=="trendinaliaDK") %>%
+        filter(created >= "2017-01-29")
+
+ICOPFIRES_tweets <- ICOPFIRES_raw_tweets %>%
+  filter(created >= "2017-01-29") 
+```
+
+
+|Descripcion | AEETMED | iCOPFires
+|------------|---|---|
+|Numero total de tweets generados | `r nrow(AEETMED_tweets)`|`r nrow(ICOPFIRES_tweets)`|
+|Numero total de tweets originales (sin contar retweets): | `r sum(!AEETMED_tweets$isRetweet)`| `r sum(!ICOPFIRES_tweets$isRetweet)`|
+|Numeros de usuarios que han tuiteado: | `r length(unique(AEETMED_tweets$screenName))`|`r length(unique(ICOPFIRES_tweets$screenName))`|
+
+
+#### Actividad durante la semana
+
+Como la API permite importar la fecha y hora del tuit, podemos ver en qué momentos se produjo más actividad.
+
+```{r echo =FALSE, dpi = 600, fig.width=12}
+
+original_AEETMED_tweets <- AEETMED_tweets %>% filter(!isRetweet) # Only original tweets
+
+AEETMED_tweets %>%
+  ggplot(aes(created, fill = isRetweet)) +
+    geom_histogram(bins = 100) + 
+    scale_x_datetime(date_breaks = "6 hours",
+                     date_labels = "%a %d %H:%M") +
+    theme_bw() + 
+    theme(axis.text.x = element_text(angle = 90, hjust = 1),
+          legend.position = c(0.85,0.85)) + 
+    scale_fill_brewer(type = "qual", palette = "Set1",
+                      name="Tipo de tweet",
+                      labels=c("Original", "Retweet")) +
+        geom_text(x=as.numeric(min(AEETMED_tweets$created)+30000), y = 80, label="#AEETMED", size=5)
+
+```
+
+```{r echo =FALSE, dpi = 600, fig.width=12}
+original_ICOPFIRES_tweets <- ICOPFIRES_tweets %>% filter(!isRetweet) # Only original tweets
+
+ICOPFIRES_tweets %>%
+  ggplot(aes(created, fill = isRetweet)) +
+    geom_histogram(bins = 100) + 
+    scale_x_datetime(date_breaks = "6 hours",
+                     date_labels = "%a %d %H:%M") +
+    theme_bw() + 
+    theme(axis.text.x = element_text(angle = 90, hjust = 1),
+          legend.position = c(0.85,0.85)) + 
+    scale_fill_brewer(type = "qual", palette = "Set1",
+                      name="Tipo de tweet",
+                      labels=c("Original", "Retweet")) +
+        geom_text(x=as.numeric(min(ICOPFIRES_tweets$created)+30000), y = 70, label="#iCOPFires", size=5)
+```
+
+Vemos que en el congreso de la AEET el grueso de actividad se produjo el jueves y el viernes, mientras que en el de quemas prescritas se tuiteó sobre todo miércoles y jueves. Además, en los dos casos parece que la proporción de retuits fue más alta por la tarde, veamos si es así:
+
+
+```{r echo=FALSE, warning=FALSE, dpi =600, fig.width=12}
+AEETMED_tweets$bin <- cut(as.numeric(AEETMED_tweets$created), breaks = 70)
+
+AEETMED_tweets %>% group_by(bin) %>%
+    summarize(tweets = n(),
+            retweetsToTweets = sum(isRetweet) / tweets,
+            created = min(created)) %>%
+    ggplot(aes(created, tweets, fill = retweetsToTweets)) +
+    geom_bar(stat = "identity", width = 4000) +
+    scale_x_datetime(date_breaks = "6 hours",
+                     date_labels = "%a %d %H:%M") +
+    theme_dark() +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+    scale_fill_distiller(palette = "Spectral") +
+        geom_text(x=as.numeric(min(AEETMED_tweets$created))+30000, y = 80, label="#AEETMED", size=4, color="white", fontface="bold")
+
+```
+
+```{r echo =FALSE, warnings = FALSE, message = FALSE, dpi = 600, fig.width=12}
+ICOPFIRES_tweets$bin <- cut(as.numeric(ICOPFIRES_tweets$created), breaks = 70)
+
+ICOPFIRES_tweets %>% group_by(bin) %>%
+    summarize(tweets = n(),
+            retweetsToTweets = sum(isRetweet) / tweets,
+            created = min(created)) %>%
+    ggplot(aes(created, tweets, fill = retweetsToTweets)) +
+    geom_bar(stat = "identity", width=3000) +
+    scale_x_datetime(date_breaks = "6 hours",
+                     date_labels = "%a %d %H:%M") +
+    theme_dark() +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+    scale_fill_distiller(palette = "Spectral")+
+        geom_text(x=as.numeric(min(ICOPFIRES_tweets$created)+30000), y = 95, label="#iCOPFires", size = 4,color="white", fontface="bold")
+
+```
+Efectivamente, el ratio retweets/tweets originales es más alto por la tarde en ambos congresos, y es que no éramos pocos los que consultábamos los **highlights** de la jornada al llegar a casa por la tarde, retuiteando lo que nos parecia mas interesante. Pero también destaca que el ratio de retuits por tuit fue mucho más alto para el congreso de quemas prescritas, lo que muestra que los tuits generados alrededor de este congreso se difundieron más. 
+
+Como no quiero que esta entrada se convierta en una competición de un congreso contra el otro, ni que se haga demasiado larga, a partir de aquí analizaremos los datos por separado para cada uno de ellos. Hoy empezaremos por el que se celebró más lejos de mi, en Sevilla (el AEETMED), y publicaré el análisis de #ICOPFires lo antes posible, en una entrada separada.
+
+Como decíamos, se generaron durante la semana pasada `r nrow(AEETMED_tweets)` tuits con la etiqueta #AEETMED, con `r length(unique(AEETMED_tweets$screenName))` usarios distintos tuiteando en algún momento de la semana. Estos fueron los 5 tuits más retuiteados:
+
+```{r top-rt, echo=FALSE, results='asis'}
+render_tweet <- function(dt, row) {
+    screen_name <- dt[i, "screenName"]
+    id <- format(dt[i, "id"], scientific = FALSE)
+    txt <- dt[i, "text"]
+    created <- format(dt[i, "created"], "%Y-%m-%d")
+    n_fav <- dt[i, "favoriteCount"]
+    n_retweets <- dt[i, "retweetCount"]
+    cat("<blockquote class=\"twitter-tweet\" lang=\"en\"> \n",
+        "<p lang=\"en\" dir=\"ltr\">",
+        txt,
+        "</p>&mdash; ",
+        "<a href=\"https://twitter.com/", screen_name, "\">", screen_name, "</a>", "&nbsp;|&nbsp;",
+        "<a href=\"https://twitter.com/",
+        screen_name, "/status/", id, "\"> ", created, "</a> &nbsp;|&nbsp;",
+        n_retweets, " retweets, ",  n_fav, " favorites. </blockquote>",
+        "\n \n",
+        sep = "")
+}
+
+top_rt <- data.frame(AEETMED_tweets %>%
+    filter(!isRetweet) %>%
+    filter(!screenName %in% c('meeting_goer')) %>%
+    arrange(desc(retweetCount)) %>%
+    slice(1:5))
+
+for (i in seq_len(nrow(top_rt))) {
+    render_tweet(top_rt, i)
+}
+```
+
+Y estos los más marcados como favoritos:
+
+```{r top-fav, echo=FALSE, results='asis'}
+top_fav <- data.frame(AEETMED_tweets %>%
+  filter(!isRetweet) %>%
+  arrange(desc(favoriteCount)) %>%
+  slice(1:5))
+
+for (i in seq_len(nrow(top_fav))) {
+    render_tweet(top_fav, i)
+}
+
+
+```
+
+#### Tuiteros más activos
+
+Veamos quienes fueron los más activos de entre los `r length(unique(ICOPFIRES_tweets$screenName))` usuarios que tuitearon sobre el congreso utilizando la etiqueta oficial. 
+
+```{r echo = FALSE, dpi = 600, fig.width=10}
+# Todos los tweets
+
+top_users <- AEETMED_tweets %>% group_by(screenName) %>%
+    summarize(total_tweets = n(),
+              Retweet = sum(isRetweet),
+              Original = sum(!isRetweet)) %>%
+    arrange(desc(total_tweets)) %>%
+    slice(1:30) %>%
+    gather(type, n_tweets, -screenName, -total_tweets)
+
+top_users$screenName <- reorder(top_users$screenName,
+                                top_users$total_tweets,
+                                function(x) sum(x))
+top_users %>%
+  transform(screenName = reorder(screenName, -n_tweets)) %>% # Order descending
+  ggplot(aes(screenName, n_tweets,fill = type)) + 
+    geom_bar(aes(x = screenName, y = n_tweets, fill = type),stat = "identity") +
+    scale_fill_manual(values = wes_palette("Zissou")[c(1, 3)],
+                      name="Tipo de tweet") +
+    xlab("Usuario") +
+    ylab("Num. tweets (total)") +
+    theme_bw() + 
+    theme(axis.text.x = element_text(angle = 45, hjust = 1),
+          legend.position = "top")
+
+#Solo tweets originales (excluyendo retuits)
+
+top_orig_users <- AEETMED_tweets %>% group_by(screenName) %>%
+    summarize(total_tweets = n(),
+            Retweet = sum(isRetweet),
+            Original = sum(!isRetweet)) %>%
+    arrange(desc(Original))
+
+top_orig_users$screenName <- reorder(top_orig_users$screenName,
+                                     top_orig_users$Original,
+                                     function(x) sum(x))
+top_orig_users %>% slice(1:30) %>%
+  transform(screenName = reorder(screenName, -Original)) %>% # Order descending
+  ggplot(aes(screenName, Original)) + 
+    geom_bar(stat = "identity") +
+     xlab("Usuario") +
+    ylab("Num. tweets (sin retweets)") +
+    theme_bw() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+Si consideramos todos los tuits, las más prolíficas fueron la cuenta de la [AEET](http://twitter.com/_AEET_) y la de la paleontóloga [AR Gómez-Cano](http://twitter.com/argcPALEO). En cambio, si sólo consideramos los tuits originales, gana por goleada la paleoecóloga [Graciela Gil Romera](http://twitter.com/gilromera), con más de 40 tuits durante el congreso. Parece que lo *paleo* estuvo muy activo.
+
+
+### Usuarios más populares
+
+Podemos ver que usuarios resultaron más populares analizando la media de RT y FAVs que recibió cada usuario. (Nota: las figuras de abajo solo incluyen usuarios que han tuiteado mas de 3 veces, y no incluyen retuits).
+
+
+```{r, echo=FALSE, include =FALSE, dpi=600, fig.width=10}
+impact <- AEETMED_tweets %>% filter(!isRetweet) %>%
+  group_by(screenName) %>%
+  summarize(n_tweets = n(),
+            n_fav = sum(favoriteCount),
+            n_rt =  sum(retweetCount),
+            mean_fav = mean(favoriteCount),
+            mean_rt = mean(retweetCount)) %>%
+  filter(n_tweets >=  3)
+
+### Most favorited
+most_fav <- impact %>%
+  arrange(desc(n_fav)) %>%
+  slice(1:30)
+
+most_fav$screenName <- reorder(most_fav$screenName,
+                               most_fav$n_fav,
+                               sort)
+
+
+most_fav %>% 
+    transform(screenName = reorder(screenName, -n_fav)) %>% # Order descending
+    ggplot(aes(screenName, n_fav)) + 
+    geom_bar(stat = "identity") +
+    xlab("Usuario") +
+    ylab("Num. favoritos") +
+    theme_bw() + 
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+
+```{r,  echo=FALSE, eval = FALSE, include =FALSE, dpi=600, fig.width=10}
+## Most retweeted
+
+most_rt <- impact %>%
+  arrange(desc(n_rt)) %>%
+  slice(1:30)
+
+most_rt$screenName <- reorder(most_rt$screenName,
+                              most_rt$n_rt,
+                              sort)
+
+
+most_fav %>% 
+    transform(screenName = reorder(screenName, -n_rt)) %>% # Order descending
+    ggplot(aes(screenName, n_rt)) + 
+    geom_bar(stat = "identity") +
+    xlab("Usuario") +
+    ylab("Num. retweets") +
+    theme_bw() + 
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+```{r echo=FALSE, dpi=600, fig.width=10}
+
+### Mean favorites
+
+hi_mean_fav <- impact %>%
+  arrange(desc(mean_fav)) %>%
+  slice(1:30)
+
+hi_mean_fav$screenName <- reorder(hi_mean_fav$screenName,
+                                  hi_mean_fav$mean_fav,
+                                  sort)
+
+most_fav %>% 
+    transform(screenName = reorder(screenName, -mean_fav)) %>% # Order descending
+    ggplot(aes(screenName, mean_fav)) + 
+        ylab("Numero medio de favoritos") +
+    geom_bar(stat = "identity") +
+    theme_bw() + 
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+```{r echo=FALSE, dpi=600}
+
+### Mean retweets
+
+hi_mean_rt <- impact %>%
+  arrange(desc(mean_rt)) %>%
+  slice(1:30)
+
+hi_mean_rt$screenName <- reorder(hi_mean_rt$screenName,
+                                 hi_mean_rt$mean_rt,
+                                 sort)
+
+most_fav %>% 
+    transform(screenName = reorder(screenName, -mean_rt)) %>% # Order descending
+    ggplot(aes(screenName, mean_rt)) + 
+        ylab("Numero medio de retuits") +
+    geom_bar(stat = "identity") +
+    theme_bw() + 
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+```
+Parece que no hay grandes "superestrellas" que concentren la mayor parte de los RT y FAVs, sino que la progresión es bastante suave, aunque destacan perfiles de ecólogos muy reconocidos como [JC Svenning](http://twitter.com/JCSvenning), [Fernando Maestre](http://twitter.com/Maestrelab) o [Pedro Jordano](http://twitter.com/pedro_jordano), entre otros.
+
+De hecho podríamos juntar RT + Favs como un indicador del impacto, y ver si los que más impacto tuvieron son también los que más tuitearon
+```{r echo=F,dpi=600}
+impact %>% 
+        mutate(impact = n_fav + n_rt,
+               rel_impact = impact / n_tweets) %>%
+  arrange(-(impact)) %>% 
+        slice(1:30) %>%
+  transform(screenName = reorder(screenName, -n_tweets)) %>%
+  ggplot(aes(screenName, n_tweets, fill = rel_impact)) +
+  geom_bar(stat = "identity") +
+     xlab("Usuario") +
+    ylab("Impacto (RT + Fav)") +
+  theme_bw() + theme(axis.text.x = element_text(angle = 45, hjust = 1))  + 
+  scale_fill_distiller(palette = "Spectral",
+                       trans = "log", breaks = c(1, 5, 10, 50),
+                       name="impacto/tweet")
+```
+
+En líneas generales vemos que no es así, y que no hubo relación entre el número de tuits y el impacto medio de cada tuit.
+
+
+### Word cloud
+
+Estas fueron las 50 palabras más frecuentes en los tweets etiquetados con #AEETMED
+
+```{r word-cloud, echo=FALSE, message=FALSE, dpi=600}
+library(wordcloud)
+
+pal <- wes_palette("Darjeeling", 8, type = "continuous") #brewer.pal(8, "Dark2")
+
+AEETMED_tweets %>%
+  filter(!isRetweet) %>%
+  .$text %>% paste(collapse = "") %>%
+  gsub("(@|\\#)\\w+", "", .) %>%  ## remove mentions/hashtags
+  gsub("https?\\:\\/\\/\\w+\\.\\w+(\\/\\w+)*", "", .) %>% ## remove urls
+  gsub("\\bthe\\b", "", .) %>% ## remove the
+  gsub("amp", "", .) %>%  ## remove &
+  gsub("\\bspp\\b", "species", .) %>% ## replace spp by species
+  iconv(., from = "latin1", to = "UTF-8", sub = "") %>% ## remove emojis
+  wordcloud(max.words = 50, colors = pal, random.order = FALSE, scale = c(3, 0.5))
+
+```
+ Parece que efectivamente, en Sevilla hubo "grandes charlas". ;-)
+
+### Menciones: twitter como plataforma de conversación
+
+Una de las cosas buenas de twitter es cuando se montan pequeñas conversaciones entre varios usuarios sobre un tema concreto, y además no sería la primera vez que una de esas conversaciones deriva en un post de Forestalia. Usando las capacidades de las expresiones regulares (regexp) podemos identificar los usuarios que fueron mencionados más a menudo durante el congreso. 
+
+```{r, echo =F, dpi=600, fig.width=10}
+# Note: this approach does not capture conversations in the form of "quoted" retweets, as they appear as hyperlinks in the text field. This also does not count retweets as mentions.
+
+# Make a list of mentionees, index by mentioner
+mentions <- regmatches(original_AEETMED_tweets$text,
+                       gregexpr("@[-_A-Za-z0-9]+",
+                                original_AEETMED_tweets$text))
+mentions <- lapply(mentions, function(x) gsub("@", "", x)) # Strip off @
+names(mentions) <- original_AEETMED_tweets$screenName
+# Filter out non-mentioning tweets
+mentions <- mentions[lapply(mentions, length) > 0]
+
+# Who were the 30 most mentioned tweeters?
+data.frame(screenName = unlist(mentions)) %>% tbl_df %>% 
+ group_by(screenName) %>%
+ tally %>% arrange(-n) %>% slice(1:30) %>%
+  transform(screenName = reorder(screenName, -n)) %>%
+  ggplot(aes(screenName, n)) + geom_bar(stat = "identity") +
+  theme_bw() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+ 
+```
+
+Pues aparte de los organizadores, y la sede, parece que los usuarios más mencionados fieron F.Maestre y el grupo de paleocología y vertebrados de UCM y CSIC. ¡Otra vez la *paleo*!
+
+
+### Twitter como red social
+
+Lo que hace únicas a las menciones de twitter respecto a otras redes sociales como facebook, es que se pueden rastrear las menciones de ida y vuelta. Por lo tanto, una vez extraídas las menciones podemos explorar las dinámicas de las conversaciones mediante un grafo, representando cada usuario como un véertice y las menciones como las aristas entre los vértices. Aquí quiero mencionar expresamente que esta parte del código está tomada del análisis que hizo [Keith H.Turner](http://twitter.com/kay_aych) para el [ISME2016](https://github.com/khturner/HashtagISME16).
+
+```{r echo =FALSE}
+
+# Extract mentions as a vector of "from", "to", "from", "to"...
+edge_sequence <- lapply(seq_along(mentions), function(i) {
+  as.vector(rbind(rep(names(mentions)[[i]], length(mentions[[i]])),
+                  mentions[[i]]))
+  }) %>% unlist
+
+# Summarize from, to and number of mentions in a df
+edges <- data.frame(from = edge_sequence[seq(1, length(edge_sequence), 2)],
+                    to = edge_sequence[seq(2, length(edge_sequence), 2)],
+                    stringsAsFactors = F) %>% tbl_df %>%
+  group_by(from, to) %>% summarize(value = n())
+
+# Build a df for nodes
+nodes <- data.frame(id = unique(c(edges$from, edges$to)),
+                    label = unique(c(edges$from, edges$to)),
+                    stringsAsFactors = F) %>% tbl_df
+
+# Construct an igraph object of our mention graph
+library(igraph)
+mention_graph <- make_empty_graph() + vertices(nodes$id) +
+  edges(as.vector(rbind(edges$from, edges$to)), value = edges$value)
+
+# Calculate centrality of our nodes with PageRank (scaled a bit)
+V(mention_graph)$value <- page_rank(mention_graph, weights = E(mention_graph)$value)[[1]] - 0.0013 
+
+# Did a user use the #ISME16 hashtag?
+V(mention_graph)$group <- ifelse(V(mention_graph)$name %in% original_AEETMED_tweets$screenName, "HashtagUser", "NonHashtagUser")
+
+# Visualize it! In this visualization, blue nodes are people who used the #ISME16 hashtag, and yellow are those who didn't. An arrow is drawn from one node to another if the first node mentions the second in a tweet with the #ISME16 hashtag. Nodes are sized by PageRank.
+library(visNetwork)
+mention_graph_vn <- toVisNetworkData(mention_graph)
+visNetwork(nodes = mention_graph_vn$nodes, edges = mention_graph_vn$edges,
+           width = "100%", height = "800px") %>%
+  visIgraphLayout(physics = T, smooth = T) %>%
+  visEdges(arrows = "to") %>%
+  visOptions(highlightNearest = TRUE)
+
+```
+
+La verdad es que hay mucha información en este gráfico. Destaca que una buena parte de las conversaciones pasó por la cuenta oficial de la AEET, y también llaman la atención unas pocas cuentas que parecen tener una importante red de contactos en twitter (F.Maestre, JC. Svenning, P. Jordano, G. Gil-Romera) frente a las cuentas de los exteriores, que difundieron información sobre el congreso (por eso aparecen en azul) a numerosas personas que sólo recibieron menciones, pero no tuitearon (en amarillo).
+
+Incluso podríamos aplicar análisis de cluster de grafos para ver en cuantos grupos se puede clasificar la tuitesfera del AEETMED.
+```{r echo =F, warning = FALSE}
+cw <- cluster_walktrap(mention_graph)
+
+
+V(mention_graph)$group <- membership(cw)
+# Visualization is the same as before, except 
+mention_graph_vn <- toVisNetworkData(mention_graph)
+visNetwork(nodes = mention_graph_vn$nodes, edges = mention_graph_vn$edges,
+           width = "100%", height = "800px") %>%
+  visIgraphLayout(physics = T, smooth = T) %>%
+  visEdges(arrows = "to") %>%
+  visOptions(highlightNearest = TRUE)
+```
+
+Usando los parámetros por defecto de la función random walk, el grafo de menciones se divide en 23 grupos distintos, algunos muy numerosos, otros formados sólo por dos usuarios. Es un gráfico superchulo, donde se puede ver como los colegas de la misma institución tienden a agruparse juntos, mientras que hay individuos que aparecen como puentes entre dos grupos más amplios. Os animo a que os busquéis y valoreis si el algortimos os ha clasificado bien u os habeis llevado una sorpresa. La verdad es que ver los datos asi hace valorar el paper de tuiter como difusor de la actividad en una conferencia!.
+
+
+
+NOTA FINAL:
+El codigo para generar el documento fue desarrollado originalmente por [Francois Michonneau](https://github.com/fmichonneau) ([fmic_](https://twitter.com/fmic_) en Twitter) para el congreso de Evoluci?n de 2015, y se puede encontrar [aqu?](https://github.com/fmichonneau/evol2015-tweets). El codigo ha sido posteriormente  [modificado](https://github.com/jlehtoma/iccb2015-tweets/blob/gh-pages/index.Rmd) para el congreso ICCB-ECCB 2015 por Joona Lehtomaki ([jlehtoma](https://twitter.com/jlehtoma) en Twitter), y por [Emily J. Rollinson](http://rollinsonecology.com) ([ejrollinson](https://twitter.com/ejrollinson) en Twitter), para los congresos de la Ecological Society of America de 2015 (Baltimore, #ESA100), y de 2016 (Fort Lauderdale, Florida, #ESA2016). También he incorporado algunos elementos del análisis de redes que hizo [Keith H.Turner](http://twitter.com/kay_aych) para el [ISME2016](https://github.com/khturner/HashtagISME16).
+
+Los tweets que incluian el hashtag #AEETMED se recopilaron mediante el paquete [twitteR](https://cran.r-project.org/web/packages/twitteR/index.html) a partir de la API de Twitter. El documento se generó mediante RMarkdown, y el código fuente y los datos están
+ [disponibles en mi GitHub](https://github.com/ameztegui/Hashtag_Analysis). El documento, así como el código asociado, tienen una [licencia CC0](https://creativecommons.org/choose/zero/?lang=es_ES).
+
