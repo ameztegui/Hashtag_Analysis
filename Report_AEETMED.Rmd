@@ -424,11 +424,13 @@ V(mention_graph)$group <- ifelse(V(mention_graph)$name %in% original_AEETMED_twe
 # Visualize it! In this visualization, blue nodes are people who used the #ISME16 hashtag, and yellow are those who didn't. An arrow is drawn from one node to another if the first node mentions the second in a tweet with the #ISME16 hashtag. Nodes are sized by PageRank.
 library(visNetwork)
 mention_graph_vn <- toVisNetworkData(mention_graph)
-visNetwork(nodes = mention_graph_vn$nodes, edges = mention_graph_vn$edges,
+ visNetwork(nodes = mention_graph_vn$nodes, edges = mention_graph_vn$edges,
            width = "100%", height = "600px") %>%
   visIgraphLayout(physics = T, smooth = T) %>%
   visEdges(arrows = "to") %>%
   visOptions(highlightNearest = TRUE)
+
+
 
 ```
 
