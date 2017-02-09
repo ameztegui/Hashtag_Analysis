@@ -1,11 +1,14 @@
 ---
-title: "TweetsReport"
-author: "Aitor Ameztegui"
-date: "February 5th, 2017"
+title: 'Congresos científicos y Twitter (I): un análisis de #AEETMED'
 output:
   html_document: default
-
 ---
+
+```{r opts, echo = FALSE}
+knitr::opts_chunk$set(
+  fig.path = "images/"
+)
+```
 
 ```{r, echo=FALSE, results='hide', message=FALSE}
 
@@ -21,6 +24,8 @@ AEETMED_raw_tweets$created <- as_datetime(AEETMED_raw_tweets$created)
 ICOPFIRES_raw_tweets <- read_csv(file = "./data/ICOPFIRES_df_tweets.csv")
 ICOPFIRES_raw_tweets$created <- as_datetime(ICOPFIRES_raw_tweets$created)
 ```
+
+
 
 La semana pasada se celebraron a la vez dos congresos a los que no me hubiera importado para nada asistir. Por un lado, se celebró en Sevilla, del 31 de enero al 4 de febrero, el [Congreso de la Asociación Española de Ecología Terrestre (AEET)](http://www.medecos-aeet-meeting2017.es/), que este año iba en conjunto con MEDECOS, el congreso que organiza la International Society of Mediterranean Ecology. Por otro lado, la Fundación Pau Costa organizaba en Barcelona ICOPFIRES, el [Congreso Internacional sobre Quemas Prescritas](http://www.paucostafoundation.org/ICoPFires/), que este año se hizo coincidir además con la [Wildland Fire Safety Summit](http://www.paucostafoundation.org/ICoPFires/wildland-fire-safety-summit/).
 
@@ -57,7 +62,7 @@ A partir de aquí, como no quiero que esto se convierta en una competicion entre 
 
 Como la API permite importar la fecha y hora del tuit, podemos ver en qué momentos se produjo más actividad.
 
-```{r echo =FALSE, dpi = 150}
+```{r echo =FALSE, dpi = 250}
 
 original_AEETMED_tweets <- AEETMED_tweets %>% filter(!isRetweet) # Only original tweets
 
@@ -79,7 +84,7 @@ AEETMED_tweets %>%
 Vemos que en el grueso de actividad se produjo el jueves y el viernes, y además parece que la proporción de retuits fue más alta por la tarde, veamos si es así:
 
 
-```{r echo=FALSE, warning=FALSE, dpi =150}
+```{r echo=FALSE, warning=FALSE, dpi =250}
 AEETMED_tweets$bin <- cut(as.numeric(AEETMED_tweets$created), breaks = 70)
 
 AEETMED_tweets %>% group_by(bin) %>%
@@ -153,7 +158,7 @@ for (i in seq_len(nrow(top_fav))) {
 
 Veamos quienes fueron los más activos de entre los `r length(unique(ICOPFIRES_tweets$screenName))` usuarios que tuitearon sobre el congreso utilizando la etiqueta oficial. 
 
-```{r echo = FALSE, dpi = 150}
+```{r echo = FALSE, dpi = 250}
 # Todos los tweets
 
 top_users <- AEETMED_tweets %>% group_by(screenName) %>%
@@ -209,7 +214,7 @@ Si consideramos todos los tuits, las más prolíficas fueron la cuenta de la [AEET
 Podemos ver qué usuarios tuvieron más repercusión analizando la media de RT y FAVs que recibió cada usuario. (Nota: las figuras de abajo solo incluyen usuarios que han tuiteado mas de 3 veces, y no incluyen retuits).
 
 
-```{r, echo=FALSE, include =FALSE, dpi=150}
+```{r, echo=FALSE, include =FALSE, dpi=250}
 impact <- AEETMED_tweets %>% filter(!isRetweet) %>%
   group_by(screenName) %>%
   summarize(n_tweets = n(),
@@ -241,7 +246,7 @@ most_fav %>%
 ```
 
 
-```{r,  echo=FALSE, eval = FALSE, include =FALSE, dpi=150}
+```{r,  echo=FALSE, eval = FALSE, include =FALSE, dpi=250}
 ## Most retweeted
 
 most_rt <- impact %>%
@@ -263,7 +268,7 @@ most_fav %>%
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-```{r echo=FALSE, dpi=150}
+```{r echo=FALSE, dpi=250}
 
 ### Mean favorites
 
@@ -285,7 +290,7 @@ most_fav %>%
 
 ```
 
-```{r echo=FALSE, dpi=150}
+```{r echo=FALSE, dpi=250}
 
 ### Mean retweets
 
@@ -310,7 +315,7 @@ most_fav %>%
 Parece que no hay grandes "superestrellas" que concentren la mayor parte de los RT y FAVs, sino que hay un gradiente bastante suave, aunque destacan perfiles de ecólogos muy reconocidos como [JC Svenning](http://twitter.com/JCSvenning), [Fernando Maestre](http://twitter.com/Maestrelab) o [Pedro Jordano](http://twitter.com/pedro_jordano), entre otros.
 
 De hecho podríamos juntar RT + Favs como un indicador del impacto, y ver si los que más impacto tuvieron son también los que más tuitearon
-```{r echo=F,dpi=150}
+```{r echo=F,dpi=250}
 impact %>% 
         mutate(impact = n_fav + n_rt,
                rel_impact = impact / n_tweets) %>%
@@ -334,7 +339,7 @@ En líneas generales vemos que no es así, y que no parece haber relación entre el
 
 Estas fueron las 50 palabras más frecuentes en los tweets etiquetados con #AEETMED
 
-```{r word-cloud, echo=FALSE, message=FALSE, dpi=150}
+```{r word-cloud, echo=FALSE, message=FALSE, dpi=250}
 library(wordcloud)
 
 pal <- wes_palette("Darjeeling", 8, type = "continuous") #brewer.pal(8, "Dark2")
@@ -351,13 +356,13 @@ AEETMED_tweets %>%
   wordcloud(max.words = 50, colors = pal, random.order = FALSE, scale = c(3, 0.5))
 
 ```
- Parece que efectivamente, en Sevilla hubo "grandes charlas" ;-), pero se voislumbra por aquí algunos de los temas estrella que ya ha definido F. Rodríguez en el blog de Journal of Ecology: sequía, fuego, y especies.
+ Parece que efectivamente, en Sevilla hubo "grandes charlas" ;-), pero se voislumbra por aquí algunos de los temas estrella que ya ha definido Ignasi Bartomeus en el [blog de Journal of Ecology](https://jecologyblog.wordpress.com/2017/02/07/aaet-medecos/): sequía, fuego, e interacciones entre especies.
 
 ### Menciones: twitter como plataforma de conversación
 
 Una de las cosas buenas de twitter es cuando se montan debates entre varios usuarios sobre un tema concreto, a veces muy interesantes a pesar de lo limitado de los 140 caracteres, y de hecho no sería la primera vez que una de esas conversaciones deriva en un post de Forestalia. Usando las capacidades de las expresiones regulares (regexp) podemos identificar los usuarios que fueron mencionados más a menudo durante el congreso. 
 
-```{r, echo =F, dpi=150}
+```{r, echo =F, dpi=250}
 # Note: this approach does not capture conversations in the form of "quoted" retweets, as they appear as hyperlinks in the text field. This also does not count retweets as mentions.
 
 # Make a list of mentionees, index by mentioner
