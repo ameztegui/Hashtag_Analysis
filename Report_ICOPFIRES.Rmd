@@ -1,13 +1,15 @@
 ---
-title: "TweetsReport"
-author: "Aitor Ameztegui"
-date: "February 5th, 2017"
+title: 'Congresos científicos y Twitter (II): un análisis de #iCOPFires'
 output:
-  pdf_document: default
   html_document: default
 ---
 
- 
+```{r opts, echo = FALSE}
+knitr::opts_chunk$set(
+  fig.path = "images/"
+)
+```
+
 ```{r, echo=FALSE, results='hide', message=FALSE}
 
 library(knitr)
@@ -15,42 +17,41 @@ library(tidyverse)
 library(wesanderson)
 library(shiny)
 library(lubridate)
-ICOPFIRES_raw_tweets <- read_csv(file = "./data/ICOPFIRES_df_tweets.csv")
-ICOPFIRES_raw_tweets$created <- as_datetime(ICOPFIRES_raw_tweets$created)
-
-```
-
-## Sobre este documento
-Este documento ha sido producido por [Aitor Ameztegui](http://ameztegui.weebly.com) ([multivac42](https://twitter.com/multivac42) en Twitter).
-
-El codigo para generar el documento fue desarrollado originalmente por [Francois Michonneau](https://github.com/fmichonneau) ([fmic_](https://twitter.com/fmic_) en Twitter) para el congreso de Evoluci?n de 2015, y se puede encontrar [aqu?](https://github.com/fmichonneau/evol2015-tweets). El codigo ha sido posteriormente  [modificado](https://github.com/jlehtoma/iccb2015-tweets/blob/gh-pages/index.Rmd) para el congreso ICCB-ECCB 2015 por Joona Lehtomaki ([jlehtoma](https://twitter.com/jlehtoma) en Twitter), y por [Emily J. Rollinson](http://rollinsonecology.com) ([ejrollinson](https://twitter.com/ejrollinson) en Twitter), para los congresos de la Ecological Society of America de 2015 (Baltimore, #ESA100), y de 2016 (Fort Lauderdale, Florida, #ESA2016). Tambi?n he incorporado algunos elementos del an?lisis de redes que hizo [Keith H.Turner](http://twitter.com/kay_aych) para el [ISME2016](https://github.com/khturner/HashtagISME16).
-
-Los tweets que incluian el hashtag #AEETMED se recopilaron mediante el paquete [twitteR](https://cran.r-project.org/web/packages/twitteR/index.html) a partir de la API de Twitter. El documento se gener? mediante RMarkdown, y el codigo fuente y los datos est?n
- [disponibles en mi GitHub](https://github.com/ameztegui/Hashtag_Analysis). El documento, as? como el codigo asociado, tienen una [licencia CC0](https://creativecommons.org/choose/zero/?lang=es_ES).
-
-
-## Actividad durante la semana
-
-```{r fig.width=12}
-library(ggplot2)
 library(RColorBrewer)
 
-# De momento, no tengamos en cuenta los tweets generados antes de la emision del documental
-ICOPFIRES_tweets <- ICOPFIRES_raw_tweets %>%
-  filter(created >= "2017-01-29") 
-
+AEETMED_raw_tweets <- read_csv(file = "./data/AEETMED_df_tweets.csv")
+AEETMED_raw_tweets$created <- as_datetime(AEETMED_raw_tweets$created)
+ICOPFIRES_raw_tweets <- read_csv(file = "./data/ICOPFIRES_df_tweets.csv")
+ICOPFIRES_raw_tweets$created <- as_datetime(ICOPFIRES_raw_tweets$created)
 ```
 
-|Descripcion | n |
+Lo prometido es deuda. Si ayer publicaba una entrada analizando lo que había dado de sí en Twitter la conferencia de la Asociación Española de Ecología Terrestre (AEETMED), hoy nos toca analizar la otra gran conferencia de temática forestal que se celebró la semana pasada, el Congreso Internacional sobre Quemas prescritas organizado por la fundación Pau Costa, el [iCOPFires](http://www.paucostafoundation.org/ICoPFires/).
+
+
+Ya comenté ayer que, a pesar de ser un congreso mucho más específico, el número de participantes fue muy elevado, y entre el iCOPFires y la[ Wildland Fire Safety Summit](http://www.paucostafoundation.org/ICoPFires/wildland-fire-safety-summit/), que se celebraron de manera consecutiva, participaron alrededor de 500 personas. El congreso tuvo la precaución de definir un hashtag oficial ([#iCOPFires](https://twitter.com/search?q=%23icopfires)), lo que nos permitió a los que no pudimos asistir ir siguiéndolo por tuiter, y además nos facilita el análisis que vamos a hacer hoy. 
+
+Tambi?én aprovecho para repetir el agradecimiento a aquellos que hicieron análisis parecidos y además publicaron el código de manera abierta, lo que me ha permitido utilizarlo o adaptarlo a la ocasi??n. En concreto he utilizado c??digo de [aquí](https://github.com/fmichonneau/evol2015-tweets), [aquí](https://github.com/jlehtoma/iccb2015-tweets/blob/gh-pages/index.Rmd), [aquí](http://rollinsonecology.com) y [aquí](https://github.com/khturner/HashtagISME16). Los tweets con el hashtag #ICOPFires se recopilaron de la API de Twitter mediante el paquete de R [twitteR](https://cran.r-project.org/web/packages/twitteR/index.html) y la entrada la he escrito utilizando RMarkdown. El código fuente y los datos están [disponibles en mi GitHub](https://github.com/ameztegui/Hashtag_Analysis).
+
+```{r echo=F}
+# De momento, no tengamos en cuenta los tweets generados antes de la emision del documental
+
+ICOPFIRES_tweets <- ICOPFIRES_raw_tweets %>%
+  filter(created >= "2017-01-29") 
+```
+
+### Actividad durante la semana
+
+|Descripcion | n
 |------------|---|
-|Numero total de tweets originales (sin contar retweets): | `r sum(!ICOPFIRES_raw_tweets$isRetweet)`|
-|Numeros de usuarios que han tuiteado: | `r length(unique(ICOPFIRES_raw_tweets$screenName))`|
+|Numero total de tweets generados |`r nrow(ICOPFIRES_tweets)`|
+|Numero total de tweets originales (sin contar retweets): | `r sum(!ICOPFIRES_tweets$isRetweet)`|
+|Numeros de usuarios que han tuiteado: |`r length(unique(ICOPFIRES_tweets$screenName))`|
 
+En la tabla de arriba observamos el número de tuits generados (totales y sin contar retuits) y los usuarios que los generaron. No están nada mal estas cifras para un congreso de estas dimensiones. Tal como hicimos ayer, podemos ver la distribución de los tuits durante la semana:
 
-```{r fig.width=12}
+```{r echo =FALSE, dpi = 250}
 
 original_ICOPFIRES_tweets <- ICOPFIRES_tweets %>% filter(!isRetweet) # Only original tweets
-
 
 ICOPFIRES_tweets %>%
   ggplot(aes(created, fill = isRetweet)) +
@@ -63,12 +64,14 @@ ICOPFIRES_tweets %>%
     scale_fill_brewer(type = "qual", palette = "Set1",
                       name="Tipo de tweet",
                       labels=c("Original", "Retweet")) +
-        geom_text(x=1485871600, y = 70, label="#iCOPFires", size=3)
+        geom_text(x=as.numeric(min(ICOPFIRES_tweets$created)+30000), y = 80, label="#ICOPFIRES", size=5)
 
 ```
 
-Vemos que la actividad m?s intensa se produjo los dos ?ltimos di?as de congreso, jueves y viernes, y que en realidadmitad del dia. Parece que los retweets son mas importantes por la noche, veamos si es cierto
-```{r fig.width=12}
+En este caso, el grueso de tuits generado se produjo el miércoles y jueves, e igual que en AEETMED la proporción de retuits parece aumentar por la tarde, como de hecho se puede comprobar en la siguiente figura.
+
+
+```{r echo=FALSE, warning=FALSE, dpi =250}
 ICOPFIRES_tweets$bin <- cut(as.numeric(ICOPFIRES_tweets$created), breaks = 70)
 
 ICOPFIRES_tweets %>% group_by(bin) %>%
@@ -76,26 +79,80 @@ ICOPFIRES_tweets %>% group_by(bin) %>%
             retweetsToTweets = sum(isRetweet) / tweets,
             created = min(created)) %>%
     ggplot(aes(created, tweets, fill = retweetsToTweets)) +
-    geom_bar(stat = "identity") +
+    geom_bar(stat = "identity", width = 4000) +
     scale_x_datetime(date_breaks = "6 hours",
                      date_labels = "%a %d %H:%M") +
     theme_dark() +
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-    scale_fill_distiller(palette = "Spectral")
+    scale_fill_distiller(palette = "Spectral") +
+        geom_text(x=as.numeric(min(ICOPFIRES_tweets$created))+30000, y = 80, label="#ICOPFIRES", size=4, color="white", fontface="bold")
 
 ```
 
-Efectivamente, el ratio retweets/tweets originales es mas alto por la tarde, y es que no eramos pocos los que consultabamaos los highlights del dia al llegar a casa, retuiteando lo que nos parecia mas interesante.
-
-## Tuiteros mas activos
-
-Segun he podido saber por tuiter, asistentes
-So it looks like ~350 people were active on Twitter during ISME16, which is a pretty good ratio! I'd be interested to see how that compares to ISME15, and what it'll be at ISME17. As for activity, man, I thought I tweeted a lot this week, but [Siouxsie Wiles](https://twitter.com/SiouxsieW) has all of us beat by far. What's the distribution of activity look like among the top 30 active tweeters at #ISME16 this week?
+Por si alguno recuerda la entrada de ayer (y si no, la podéis encontrar [aquí](http://ecoforestalia.blogspot.com.es/2017/02/congresos-cientificos-y-twitter-i-un.html)), vemos que el ratio de retuits es bastante superior para este congreso de lo que fue para AEETMED, lo que indica que los tuits de iCOPFires tuvieron de media mayor difusión.
 
 
 
-```{r}
+###Top 3 de tuits
+
+De entre los 263 tuits originales generados (sin contar retuits), estos fueron los 3 más retuiteados, y curiosamente, también los 3 que más se marcaron como favoritos:
+
+```{r top-rt, echo=FALSE, results='asis'}
+render_tweet <- function(dt, row) {
+    screen_name <- dt[i, "screenName"]
+    id <- format(dt[i, "id"], scientific = FALSE)
+    txt <- dt[i, "text"]
+    created <- format(dt[i, "created"], "%Y-%m-%d")
+    n_fav <- dt[i, "favoriteCount"]
+    n_retweets <- dt[i, "retweetCount"]
+    cat("<blockquote class=\"twitter-tweet\" lang=\"en\"> \n",
+        "<p lang=\"en\" dir=\"ltr\">",
+        txt,
+        "</p>&mdash; ",
+        "<a href=\"https://twitter.com/", screen_name, "\">", screen_name, "</a>", "&nbsp;|&nbsp;",
+        "<a href=\"https://twitter.com/",
+        screen_name, "/status/", id, "\"> ", created, "</a> &nbsp;|&nbsp;",
+        n_retweets, " retweets, ",  n_fav, " favorites. </blockquote>",
+        "\n \n",
+        sep = "")
+}
+
+
+
+
+
+top_rt <- data.frame(ICOPFIRES_tweets %>%
+    filter(!isRetweet) %>%
+    filter(!screenName %in% c('meeting_goer')) %>%
+    arrange(desc(retweetCount)) %>%
+    slice(1:3))
+
+for (i in seq_len(nrow(top_rt))) {
+    render_tweet(top_rt, i)
+}
+```
+
+
+```{r top-fav, echo=FALSE, results='asis', eval =FALSE}
+top_fav <- data.frame(ICOPFIRES_tweets %>%
+  filter(!isRetweet) %>%
+  arrange(desc(favoriteCount)) %>%
+  slice(1:3))
+
+for (i in seq_len(nrow(top_fav))) {
+    render_tweet(top_fav, i)
+}
+
+
+```
+
+#### Tuiteros más activos
+
+Veamos quienes fueron los más activos de entre los `r length(unique(ICOPFIRES_tweets$screenName))` usuarios que tuitearon sobre el congreso utilizando la etiqueta oficial. 
+
+```{r echo = FALSE, dpi = 250}
 # Todos los tweets
+
 top_users <- ICOPFIRES_tweets %>% group_by(screenName) %>%
     summarize(total_tweets = n(),
               Retweet = sum(isRetweet),
@@ -119,7 +176,6 @@ top_users %>%
     theme(axis.text.x = element_text(angle = 45, hjust = 1),
           legend.position = "top")
 
-
 #Solo tweets originales (excluyendo retuits)
 
 top_orig_users <- ICOPFIRES_tweets %>% group_by(screenName) %>%
@@ -140,69 +196,17 @@ top_orig_users %>% slice(1:30) %>%
     theme_bw() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-
-
 ```
 
-
-## Los 5 tweets mas marcados como favoritos:
-
-```{r top-fav, echo=FALSE, results='asis'}
-top_fav <- data.frame(ICOPFIRES_tweets %>%
-  filter(!isRetweet) %>%
-  arrange(desc(favoriteCount)) %>%
-  slice(1:5))
+Si consideramos todos los tuits (originales y RTs), la [Fundación Pau Costa](https://twitter.com/PauCostaF) fue la cuenta más activa, con más de 120 tuits, seguidos por [Fuego_lab](https://twitter.com/Fuego_lab), la cuenta de J. Madrigal, y la cuenta [Dareios_Manar](https://twitter.com/Dareios_Manar). Si excluimos los retuits, en cambio, Fuego_lab aparece como el más actuvo, seguido de lejos por la cuenta de la [Asociación de Trabajadores Brif](https://twitter.com/AT_Brif), [Pyrodidactia](https://twitter.com/Pyrodidactia) y la cuenta de los GRAF, [loforestalillo](https://twitter.com/loforestalillo).
 
 
-render_tweet <- function(dt, row) {
-    screen_name <- dt[i, "screenName"]
-    id <- format(dt[i, "id"], scientific = FALSE)
-    txt <- dt[i, "text"]
-    created <- format(dt[i, "created"], "%Y-%m-%d")
-    n_fav <- dt[i, "favoriteCount"]
-    n_retweets <- dt[i, "retweetCount"]
-    cat("<blockquote class=\"twitter-tweet\" lang=\"en\"> \n",
-        "<p lang=\"en\" dir=\"ltr\">",
-        txt,
-        "</p>&mdash; ",
-        "<a href=\"https://twitter.com/", screen_name, "\">", screen_name, "</a>", "&nbsp;|&nbsp;",
-        "<a href=\"https://twitter.com/",
-        screen_name, "/status/", id, "\"> ", created, "</a> &nbsp;|&nbsp;",
-        n_retweets, " retweets, ",  n_fav, " favorites. </blockquote>",
-        "\n \n",
-        sep = "")
-}
+### Usuarios más populares
 
-for (i in seq_along(nrow(top_fav))) {
-    render_tweet(top_fav, i)
-}
+Pero no siempre tuitear mucho equivale a tener más repercusión. Éstas fueron las cuentas que recibieron, de media, más retuits por cada tuit que generaron. Una vez más destaca la Fundación Pau Costa, pero llama la atención a gran repercusión de otras cuentas como la de las [BRIF de Cuenca](https://twitter.com/BRIFpradotwit), la [As. de Trabajadores Brif](https://twitter.com/AT_Brif) o los [Agents Rurals de Catalunya](https://twitter.com/agentsruralscat). Esta última cuenta fue también la que más favoritos recibió de media.
 
 
-```
-
-
-## Los 5 tweets mas retuiteados:
-
-```{r top-rt, echo=FALSE, results='asis'}
-top_rt <- data.frame(ICOPFIRES_tweets %>%
-    filter(!isRetweet) %>%
-    filter(!screenName %in% c('meeting_goer')) %>%
-    arrange(desc(retweetCount)) %>%
-    slice(1:5))
-
-for (i in seq_len(nrow(top_fav))) {
-    render_tweet(top_rt, i)
-}
-
-```
-
-## Usuarios que han recibido mas retuits/favoritos: 
-
-Nota: las figuras de abajo solo incluyen usuarios que han tuiteado mas de 3 veces, y no incluyen retuits.
-
-### Numero total de favoritos recibidos por los usuarios
-
-```{r, echo=FALSE}
+```{r, echo=FALSE, include =FALSE, dpi=250}
 impact <- ICOPFIRES_tweets %>% filter(!isRetweet) %>%
   group_by(screenName) %>%
   summarize(n_tweets = n(),
@@ -233,9 +237,8 @@ most_fav %>%
 
 ```
 
-### Numero de retuits recibidos por los usuarios 
 
-```{r,  echo=FALSE}
+```{r,  echo=FALSE, eval = FALSE, include =FALSE, dpi=250}
 ## Most retweeted
 
 most_rt <- impact %>%
@@ -257,37 +260,13 @@ most_fav %>%
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-
-
-So it looks like there were a handful of super-tweeters with a long tail of casual tweeters. We have some other metrics in these first-order data though, including the number of retweets and favorites. If we consider those as "impact", who are the 30 most impactful ISME16 tweeters? And what's their "impact ratio" (i.e. "impact" per number of tweet)?
-
-```{r}
-impact %>% mutate(impact = n_fav + n_rt) %>%
-  arrange(-impact) %>% slice(1:30) %>%
-  transform(screenName = reorder(screenName, -impact)) %>%
-  ggplot(aes(screenName, impact, fill = impact / n_tweets)) +
-  geom_bar(stat = "identity") +
-     xlab("Usuario") +
-    ylab("Impacto") +
-  theme_bw() + theme(axis.text.x = element_text(angle = 45, hjust = 1))  + 
-  scale_fill_distiller(palette = "Spectral",
-                       trans = "log", breaks = c(1, 5, 10, 50),
-                       name="impacto/tweet")
-```
-
-I think this is starting to show some interesting divisions in Twitter patterns. First, impact (as measured by favorites + retweets) seems to be a bit more even across the top accounts than activity. Second, there are several patterns on display here, showing a range in both proflicacy and per-tweet impact. Some tweeters, for example, [Thea Whitman](https://twitter.com/TheaWhitman), had big impact with just a few tweets, most notably, ISME bingo (which I believe could be won by Tuesday afternoon):
-
-
-
-### Numero medio de favoritos recibidos 
-
-```{r,  echo=FALSE}
+```{r echo=FALSE, dpi=250}
 
 ### Mean favorites
 
 hi_mean_fav <- impact %>%
   arrange(desc(mean_fav)) %>%
-  slice(1:50)
+  slice(1:30)
 
 hi_mean_fav$screenName <- reorder(hi_mean_fav$screenName,
                                   hi_mean_fav$mean_fav,
@@ -296,21 +275,20 @@ hi_mean_fav$screenName <- reorder(hi_mean_fav$screenName,
 most_fav %>% 
     transform(screenName = reorder(screenName, -mean_fav)) %>% # Order descending
     ggplot(aes(screenName, mean_fav)) + 
+        ylab("Numero medio de favoritos") +
     geom_bar(stat = "identity") +
     theme_bw() + 
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ```
 
-### Numero medio de retuits recibidos
-
-```{r, echo=FALSE}
+```{r echo=FALSE, dpi=250}
 
 ### Mean retweets
 
 hi_mean_rt <- impact %>%
   arrange(desc(mean_rt)) %>%
-  slice(1:50)
+  slice(1:30)
 
 hi_mean_rt$screenName <- reorder(hi_mean_rt$screenName,
                                  hi_mean_rt$mean_rt,
@@ -319,18 +297,40 @@ hi_mean_rt$screenName <- reorder(hi_mean_rt$screenName,
 most_fav %>% 
     transform(screenName = reorder(screenName, -mean_rt)) %>% # Order descending
     ggplot(aes(screenName, mean_rt)) + 
+        ylab("Numero medio de retuits") +
     geom_bar(stat = "identity") +
     theme_bw() + 
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 
 ```
+De hecho, si sumamos RTs y FAVs podemos calcular el impacto de una cuenta, y analizar si las cuentas con mayor impacto eran las que más tuitearon.
 
-## Word cloud
+```{r echo=F,dpi=250}
+impact %>% 
+        mutate(impact = n_fav + n_rt,
+               rel_impact = impact / n_tweets) %>%
+  arrange(-(impact)) %>% 
+        slice(1:30) %>%
+  transform(screenName = reorder(screenName, -n_tweets)) %>%
+  ggplot(aes(screenName, n_tweets, fill = rel_impact)) +
+  geom_bar(stat = "identity") +
+     xlab("Usuario") +
+    ylab("Numero de tuits") +
+  theme_bw() + theme(axis.text.x = element_text(angle = 45, hjust = 1))  + 
+  scale_fill_distiller(palette = "Spectral",
+                       trans = "log", breaks = c(1, 5, 10, 50),
+                       name="impacto/tweet")
+```
 
-Las 50 palabras mas frecuentes en los tweets etiquetados con #7CFE.
+Parece que no es el caso, y algunas cuentas tienen un gran impacto sin necesidad de haber tuiteado demasiado, probablemente aquellas con mayor número de seguidores.
 
-```{r word-cloud, echo=FALSE, message=FALSE}
+
+### Word cloud
+
+Estas fueron las 50 palabras más frecuentes en los tweets etiquetados con #ICOPFIRES.
+
+```{r word-cloud, echo=FALSE, message=FALSE, dpi=250}
 library(wordcloud)
 
 pal <- wes_palette("Darjeeling", 8, type = "continuous") #brewer.pal(8, "Dark2")
@@ -344,16 +344,16 @@ ICOPFIRES_tweets %>%
   gsub("amp", "", .) %>%  ## remove &
   gsub("\\bspp\\b", "species", .) %>% ## replace spp by species
   iconv(., from = "latin1", to = "UTF-8", sub = "") %>% ## remove emojis
-  wordcloud(max.words = 50, colors = pal, random.order = FALSE, scale = c(3, .7))
+  wordcloud(max.words = 50, colors = pal, random.order = FALSE, scale = c(3, 0.5))
 
 ```
+Pocas sorpresas, con "quemas", "prescritas" y "fuego" como las más abundantes. Eso sí, llama la atención, en comparación con el word cloud de AEETMED, que en este caso dominan las palabras en español frente al inglés.
 
+### Menciones: twitter como plataforma de conversación
 
-### Mentions: Twitter as a conversation platform
+La API de twitter nos permite rastrear la direccionalidad de las conversaciones, es decir, quien cita a quien en un tuit, y analizar por tanto qué usuarios han sido más mencionados, así como la dinámica de las menciones.
 
-One of my favorite things about using Twitter at conferences though is its use as a forum for real-time conversation between participants. It has great potential to span different sessions, times, and physical boundaries. With ~2,000 attendees, you can't possibly always meet up with the right group to discuss something you're interested in. Who were some of the most active tweeters in conversations? We'll begin looking into this by compiling a record of mentions by parsing the `text` field.
-
-```{r}
+```{r, echo =F, dpi=250}
 # Note: this approach does not capture conversations in the form of "quoted" retweets, as they appear as hyperlinks in the text field. This also does not count retweets as mentions.
 
 # Make a list of mentionees, index by mentioner
@@ -375,14 +375,14 @@ data.frame(screenName = unlist(mentions)) %>% tbl_df %>%
  
 ```
 
+Domina claramente, una vez más, la Fundación Pau Costa, pero destaca el alto número de menciones que recibe Marc Castellnou ([@incendi](http://twitter.com/incendi)), a pesar de no haber tuiteado más de 4 veces durante el congreso.
 
 
+### Twitter como red social
 
-### Twitter as a social network
+Como decía antes, podemos rastrear la direccionalidad de las menciones, lo que permite explorar las dinámicas de conversación mediante análisis de redes y representarlas en un grafo, utilizando los paquetes de R igraph y visNetwork. El resultado es un gráfico dinámico superchulo, pero que por desgracia parece no gustar a Blogger, por lo que os dejo la versión estática y os animo a pasaros por mi GitHub para ver el dinámico. 
 
-The unique thing about Twitter mentions as opposed to other social network tags (e.g. Facebook) is that they can mark a back-and-forth conversation. Now that we've extracted mentions from our #ISME16 tweets, we can explore the dynamics of these conversations. We'll do so with a graph, where users are nodes and mentions are edges between those nodes
-
-```{r}
+```{r echo =FALSE, message=F, warning = F}
 
 # Extract mentions as a vector of "from", "to", "from", "to"...
 edge_sequence <- lapply(seq_along(mentions), function(i) {
@@ -415,59 +415,37 @@ V(mention_graph)$group <- ifelse(V(mention_graph)$name %in% original_ICOPFIRES_t
 # Visualize it! In this visualization, blue nodes are people who used the #ISME16 hashtag, and yellow are those who didn't. An arrow is drawn from one node to another if the first node mentions the second in a tweet with the #ISME16 hashtag. Nodes are sized by PageRank.
 library(visNetwork)
 mention_graph_vn <- toVisNetworkData(mention_graph)
-visNetwork(nodes = mention_graph_vn$nodes, edges = mention_graph_vn$edges,
-           width = "100%", height = "800px") %>%
+ visNetwork(nodes = mention_graph_vn$nodes, edges = mention_graph_vn$edges,
+           width = "100%", height = "600px") %>%
   visIgraphLayout(physics = T, smooth = T) %>%
   visEdges(arrows = "to") %>%
   visOptions(highlightNearest = TRUE)
 
+
+
 ```
 
-So there's clearly a lot to chew on here, but I think there's some pretty neat stuff going on. For example, you can definitely see again that the plenary speakers (Rich Lenski, Penny Chisolm, etc.), are huge central points in the discussion. But you can also identify some people who are highly interconnected in the ISME16 sub-Twittersphere. Also interesting are those people around the edges who used the #ISME16 hashtag (and thus are blue), who "spread the gospel" of the conference to others who didn't use the hashtag (and thus are yellow).
+Destaca, aunque no sorprende, el papel central de la F. Pau Costa, y un puñado de cuentas bien conectadas, ya que tanto reciben como emiten numerosas menciones (Fuego_lab, AT_Brif,[ essexforester](http://twitter.com/essexforester...). Otras cuentas, en cambio, difundieron información a varias personas que sólo fueron mencionadas, pero no tuitearon (son las que aparecen en amarillo).
 
-### Clustering, cliques, and expanding your network at conferences
+Mediante un análisis cluster podemos agrupar dicho gráfico de interacciones en grupos lo más homohenéos posible, y el resultado sería este (una vez más, para ver la versión dinámica tendréis que ir a [GitHub](https://github.com/ameztegui/Hashtag_Analysis)).
 
-While browsing around in that mention graph, I noticed a few interconnected cliques buried in the whole #ISME16 hairball that got me thinking. Conferences are a great place to catch up with old friends and make new ones - how does that play out on our Twitter mention graph? I decided to apply graph clustering analysis to start to try and get an angle on this with visualization.
-
-```{r}
+```{r echo =F, warning = FALSE}
 cw <- cluster_walktrap(mention_graph)
-cw
-```
 
-I tried a few different clustering algorithms built into `igraph`, some were painfully slow, and some did a terrible job resolving modularity, but a weighted [random walk approach](http://arxiv.org/abs/physics/0512106) was super fast and turned out to do a great job with the default parameters. So our #ISME16 mention graph breaks out into 104 groups - what does that look like?
 
-```{r}
 V(mention_graph)$group <- membership(cw)
-# Visualization is the same as before, except 
 mention_graph_vn <- toVisNetworkData(mention_graph)
 visNetwork(nodes = mention_graph_vn$nodes, edges = mention_graph_vn$edges,
-           width = "100%", height = "800px") %>%
+           width = "100%", height = "600px") %>%
   visIgraphLayout(physics = T, smooth = T) %>%
   visEdges(arrows = "to") %>%
   visOptions(highlightNearest = TRUE)
 ```
 
-Aside from being super pretty, I think this visualization is really neat and helps highlight the substructure in this highly interconnected graph. Many of those highly connected speakers form a big clique in the center of the graph and provide a lot of interconnectivity. But walk out from that and you can see some cool trends too. For example, labs and colleagues tend to form their own cliques (check out Kelly Wrighton's lab and other associated Ohio State people in particular). And there are people at the edges of those cliques that make the bridge to other groups and other cliques, really embracing the networking aspect of conferences (at least on Twitter!) Take a look and see where you landed. Does it feel about right? Does seeing the interactions this way change the way you think about using Twitter at conferences? Let me know!
+Llama la atención que el algortimo (con los parámetros por defecto, no he tocado nada porque no domino la técnica de análisis) solo crea 7 grupos, de los que sólo 4 están realmente muy poblados, y los otros 3 son residuales, con solo unas pocas cuentas. Digo que sorprende porque en el análisis que publiqué ayer para el AEETMED el mismo algoritmo creó 23 grupos distintos. Para mí esto puede tener dos interpretaciones: una opción es que los asistentes a iCOPFires interactuan más entre sí, con lo que se diluirían las fornteras entre grupos. Pero también puede ser consecuencia de que en este congreso hay más actividad de cuentas institucionales (Pau Costa, CTFC, bombers de la Gencat...) o cuentas colectivas que agrupan a bastantes personas (las de las BRIF serían un buen ejemplo). Por tanto parece lógico que haya menos diversidad de interacciones.  De hecho, si observamos los grupos maás poblados destaca que hay un usuario central muy bien conectado, que actúa de nexo de unión entre los miembros del grupo. Este papel lo jugarían, por un lado la cuenta de la F. Pau Costa, que recibe muchas menciones, y cuentas como Fuego_Lab o essexforester, que emiten muchas.
+
+En cualquier caso, no me negaréis que es un gráfico que, además de ser chulo, tiene su miga. Os animo a que os busquéis y me digáis si os sorprende ver con quién habéis interactuado y en que grupo habéis caido!
 
 
+Hasta aquí llega mi análisis de iCOPFires, pero antes de acabar quiero recalcar mi agradecimiento a aquellos que han generado el código original en el que me he basado, incluyendo [François Michonneau](https://github.com/fmichonneau), Joona Lehtomaki ([jlehtoma](https://twitter.com/jlehtoma) en Twitter), y [Emily J. Rollinson](http://rollinsonecology.com/) ([ejrollinson](https://twitter.com/ejrollinson) en Twitter), así como También he incorporado algunos elementos del análisis de redes que hizo [Keith H.Turner](http://twitter.com/kay_aych) para el [ISME2016](https://github.com/khturner/HashtagISME16). Recuerdo también que la entrada ha sido generada con rmarkdown, esta disponible en GitHub y tiene, como el código asociado, una [licencia CC0](https://creativecommons.org/choose/zero/?lang=es_ES).
 
-
------
-
-<p xmlns:dct="http://purl.org/dc/terms/" xmlns:vcard="http://www.w3.org/2001/vcard-rdf/3.0#">
-  <a rel="license"
-     href="http://creativecommons.org/publicdomain/zero/1.0/">
-    <img src="http://i.creativecommons.org/p/zero/1.0/88x31.png" style="border-style: none;" alt="CC0" />
-  </a>
-  <br />
-  To the extent possible under law,
-  <a rel="dct:publisher"
-     href="https://github.com/erollinson/erollinson.github.io">
-    <span property="dct:title">Aitor Ameztegui</span></a>
-  has waived all copyright and related or neighboring rights to
-  <span property="dct:title">Summary of tweets at the 2016 Ecological Society of America conference</span>.
-This work is published from:
-<span property="vcard:Country" datatype="dct:ISO3166"
-      content="ESP" about="https://github.com/erollinson/erollinson.github.io">
-  Espana</span>.
-</p>
