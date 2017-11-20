@@ -1,0 +1,459 @@
+---
+title: 'Congresos científicos y Twitter (III): un análisis del #7CFE'
+output:
+  html_document: default
+---
+
+```{r opts, echo = FALSE}
+knitr::opts_chunk$set(
+  fig.path = "images/"
+)
+```
+
+```{r, echo=FALSE, results='hide', warning= FALSE, message=FALSE}
+
+library(knitr)
+library(tidyverse)
+library(wesanderson)
+library(shiny)
+library(lubridate)
+library(RColorBrewer)
+
+CFE_raw_tweets <- read_csv(file = "./data/7CFE_df_tweets.csv")
+CFE_raw_tweets$created <- as_datetime(CFE_raw_tweets$created)
+```
+
+Seguro que más de uno estaba esperando esta entrada. Allá por febrero inauguré una especie de "sección" de Forestalia en la que analizaba el seguimiento en twitter de dos congresos científicos: [iCOPFires](http://www.forestaliablog.com/2017/02/congresos-cientificos-y-twitter-ii-un-analisis-de-icopfires/) y el congreso de la [AEET](http://www.forestaliablog.com/2017/02/congresos-cientificos-y-twitter-i-un-analisis-de-aeetmed/). Y por supuesto, no podía dejar pasar la ocasión de realizar el mismo análisis para el 7 Congreso Forestal Español, que ya sabéis que se celebró en Plasencia (Cáceres) entre el 26 y el 30 de junio. 
+Al igual que aquellos dos congresos, la Sociedad Española de Ciencias Forestales tuvo el buen criterio de definir con antelación un hashtag[(#7CFE)](https://twitter.com/hashtag/7cfe), que es el que usaremos para el seguimiento.
+
+Una vez más, quiero recordar antes que nada que el código para generar este tipo de análisis no es mio, sino que he adaptado código de diversas fuentes, sobre todo de [aquí](https://github.com/fmichonneau/evol2015-tweets), [aquí](https://github.com/jlehtoma/iccb2015-tweets/blob/gh-pages/index.Rmd), [aquí](http://rollinsonecology.com) y [aquí](https://github.com/khturner/HashtagISME16). Los tweets con el hashtag #7CFE se recopilaron de la API de Twitter mediante el paquete de R [twitteR](https://cran.r-project.org/web/packages/twitteR/index.html) y la entrada la he escrito utilizando RMarkdown. El código fuente y los datos están [disponibles en mi GitHub](https://github.com/ameztegui/Hashtag_Analysis).
+
+```{r echo=F, warning = FALSE}
+# De momento, no tengamos en cuenta los tweets generados antes de la emision del documental
+
+CFE_tweets <- CFE_raw_tweets %>%
+  filter(created >= "2017-06-22") 
+```
+
+### Actividad durante la semana
+
+|Descripcion | n
+|------------|---|
+|Numero total de tweets generados |`r nrow(CFE_tweets)`|
+|Numero total de tweets originales (sin contar retweets): | `r sum(!CFE_tweets$isRetweet)`|
+|Numeros de usuarios que han tuiteado: |`r length(unique(CFE_tweets$screenName))`|
+
+En la tabla de arriba observamos el número de tuits generados (totales y sin contar retuits) y los usuarios que los generaron. Si recordáis las entradas de #iCOPFIRES y #AEET, los del 7CFE son números mucho más altos, aunque es cierto que el número de inscritos también fue muy superior. También podemos ver la distribución de los tuits durante la semana:
+
+```{r echo =FALSE, dpi = 250}
+
+original_CFE_tweets <- CFE_tweets %>% filter(!isRetweet) # Only original tweets
+
+CFE_tweets %>%
+  ggplot(aes(created, fill = isRetweet)) +
+    geom_histogram(bins = 100) + 
+    scale_x_datetime(date_breaks = "8 hours",
+                     date_labels = "%a %d %H:%M") +
+    theme_bw() + 
+    theme(axis.text.x = element_text(angle = 90, hjust = 1),
+          legend.position = c(0.85,0.85)) + 
+    scale_fill_brewer(type = "qual", palette = "Set1",
+                      name="Tipo de tweet",
+                      labels=c("Original", "Retweet")) +
+        geom_text(x=as.numeric(min(CFE_tweets$created)+30000), y = 80, label="#7CFE", size=5)
+
+```
+
+Se ven claramente los 5 días del congreso, con un pequeño bajón tuitero el miércoles (día de visitas de campo). En cambio, la actividad fue frenética el jueves y viernes, lo que seguramente corresponde con el desembarco en el congreso de los participantes en la mesa de incendios forestales, muy activos en redes sociales. Como en otros congresos, la proporción retuits/tuits parece aumentar por la tarde, como de hecho se puede comprobar en la siguiente figura.
+
+
+```{r echo=FALSE, warning=FALSE, dpi =250}
+CFE_tweets$bin <- cut(as.numeric(CFE_tweets$created), breaks = 70)
+
+CFE_tweets %>% group_by(bin) %>%
+    summarize(tweets = n(),
+            retweetsToTweets = sum(isRetweet) / tweets,
+            created = min(created)) %>%
+    ggplot(aes(created, tweets, fill = retweetsToTweets)) +
+    geom_bar(stat = "identity", width = 4000) +
+    scale_x_datetime(date_breaks = "12 hours",
+                     date_labels = "%a %d %H:%M") +
+    theme_dark() +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+    scale_fill_distiller(palette = "Spectral") +
+        geom_text(x=as.numeric(min(CFE_tweets$created))+30000, y = 80, label="#CFE", size=4, color="white", fontface="bold")
+
+```
+
+Comparado con el congreso de la  [AEET](http://www.forestaliablog.com/2017/02/congresos-cientificos-y-twitter-i-un-analisis-de-aeetmed/), el ratio de retuits es bastante superior para este congreso de lo que fue para AEETMED, lo que indica que los tuits del CFE tuvieron de media mayor difusión.
+
+
+
+###Top 3 de tuits
+
+De entre los 841 tuits originales generados (sin contar retuits) durante esa semana, estos fueron los 3 más retuiteados:
+
+```{r top-rt, echo=FALSE, results='asis'}
+render_tweet <- function(dt, row) {
+    screen_name <- dt[i, "screenName"]
+    id <- format(dt[i, "id"], scientific = FALSE)
+    txt <- dt[i, "text"]
+    created <- format(dt[i, "created"], "%Y-%m-%d")
+    n_fav <- dt[i, "favoriteCount"]
+    n_retweets <- dt[i, "retweetCount"]
+    cat("<blockquote class=\"twitter-tweet\" lang=\"en\"> \n",
+        "<p lang=\"en\" dir=\"ltr\">",
+        txt,
+        "</p>&mdash; ",
+        "<a href=\"https://twitter.com/", screen_name, "\">", screen_name, "</a>", "&nbsp;|&nbsp;",
+        "<a href=\"https://twitter.com/",
+        screen_name, "/status/", id, "\"> ", created, "</a> &nbsp;|&nbsp;",
+        n_retweets, " retweets, ",  n_fav, " favorites. </blockquote>",
+        "\n \n",
+        sep = "")
+}
+
+
+
+
+
+top_rt <- data.frame(CFE_tweets %>%
+    filter(!isRetweet) %>%
+    filter(!screenName %in% c('meeting_goer')) %>%
+    arrange(desc(retweetCount)) %>%
+    slice(1:3))
+
+for (i in seq_len(nrow(top_rt))) {
+    render_tweet(top_rt, i)
+}
+```
+
+Y estos los 3 que más se marcaron como favoritos:
+
+```{r top-fav, echo=FALSE, results='asis', eval =FALSE}
+top_fav <- data.frame(CFE_tweets %>%
+  filter(!isRetweet) %>%
+  arrange(desc(favoriteCount)) %>%
+  slice(1:3))
+
+for (i in seq_len(nrow(top_fav))) {
+    render_tweet(top_fav, i)
+}
+
+
+```
+
+La foto de familia del #7CFE destaca como uno de los tuits que más repercusión tuvo, pero si algo llama la atención es que los dos tuits más difundidos están relacionados con la intervención de [Juan López de Uralde] (https://twitter.com/juralde), portavoz de [Equo](http://partidoequo.es/). Habrá quien lo interprete como un "robo"" de protagonismo, ya que su intervención - hasta donde yo sé - se limitó a participar en un taller sobre política forestal, pero yo lo veo como una prueba más de lo que comentaba en la anterior entrada: los grupos ecologistas (o en este caso partido ecologista) no deben ser el enemigo del sector forestal, sino que tenemos que aprovechar su mayor tirón mediático, su capacidad de llegar a la gente y los medios, para dar visibilidad al sector forestal, sus problemáticas, y sus retos. No es fácil, ya que aún hay muchos temas en los que chocaremos, pero subámonos al tren en lugar de intentar hacerlo descarrilar con una palanca.
+
+
+#### Tuiteros más activos
+
+De los `r length(unique(CFE_tweets$screenName))` usuarios que tuitearon sobre el congreso utilizando la etiqueta oficial, pocas sorpresas entre los más activos. Si miramos los tuits globales (tuits y retuits) destaca la cuenta de Pilar Valbuena [SoyForestal](https://twitter.com/soyforestal), fotógrafa oficial del congreso y tuitera empedernida, que con más de 150 tuits consigue superar incluso a la cuenta oficial del [congreso](https://twitter.com/congresoforesta). En tercer lugar, Jose Carlos Martínez [josekaer](https://twitter.com/josekaer), primer youtuber forestal que conozco, de quien ya hablamos en la última entrada sobre [comunicación forestal](http://www.forestaliablog.com/2017/07/que-pinta-un-forestal-en-internet/).  La cosa cambia si miramos sólo tuits originales, y en este caso destacan el prolífico Javier Madrigal (o su alter ego, [Fuego_lab](https://twitter.com/PauCostaF)), y José Luis Tomé ([quecoak](https://twitter.com/quecoak)), de Agresta.
+
+```{r echo = FALSE, dpi = 250}
+# Todos los tweets
+
+top_users <- CFE_tweets %>% group_by(screenName) %>%
+    summarize(total_tweets = n(),
+              Retweet = sum(isRetweet),
+              Original = sum(!isRetweet)) %>%
+    arrange(desc(total_tweets)) %>%
+    slice(1:30) %>%
+    gather(type, n_tweets, -screenName, -total_tweets)
+
+top_users$screenName <- reorder(top_users$screenName,
+                                top_users$total_tweets,
+                                function(x) sum(x))
+top_users %>%
+  transform(screenName = reorder(screenName, -n_tweets)) %>% # Order descending
+  ggplot(aes(screenName, n_tweets,fill = type)) + 
+    geom_bar(aes(x = screenName, y = n_tweets, fill = type),stat = "identity") +
+    scale_fill_manual(values = wes_palette("Zissou")[c(1, 3)],
+                      name="Tipo de tweet") +
+    xlab("Usuario") +
+    ylab("Num. tweets (total)") +
+    theme_bw() + 
+    theme(axis.text.x = element_text(angle = 45, hjust = 1),
+          legend.position = "top")
+
+#Solo tweets originales (excluyendo retuits)
+
+top_orig_users <- CFE_tweets %>% group_by(screenName) %>%
+    summarize(total_tweets = n(),
+            Retweet = sum(isRetweet),
+            Original = sum(!isRetweet)) %>%
+    arrange(desc(Original))
+
+top_orig_users$screenName <- reorder(top_orig_users$screenName,
+                                     top_orig_users$Original,
+                                     function(x) sum(x))
+top_orig_users %>% slice(1:30) %>%
+  transform(screenName = reorder(screenName, -Original)) %>% # Order descending
+  ggplot(aes(screenName, Original)) + 
+    geom_bar(stat = "identity") +
+     xlab("Usuario") +
+    ylab("Num. tweets (sin retweets)") +
+    theme_bw() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+
+### Usuarios más populares
+
+Pero no siempre tuitear mucho equivale a tener más repercusión. Éstas fueron las cuentas que recibieron, de media, más retuits por cada tuit que generaron. Una vez más destaca la cuenta oficial del Congreso, pero llama la atención la gran repercusión de otras cuentas como la de [Felipe Bravo](https://twitter.com/BRIFpradotwit), presidente de la SECF, o la de [Maria Pipió] (https://twitter.com/maria_pipio), técnico de prevención de incendios de la Diputación de Girona. Maria fue también la cuenta que recibió más retuits de media, no en vano cada uno de sus 6 tuits sobre el congreso fue retuiteado más de 7 veces.
+
+
+```{r, echo=FALSE, include =FALSE, dpi=250}
+impact <- CFE_tweets %>% filter(!isRetweet) %>%
+  group_by(screenName) %>%
+  summarize(n_tweets = n(),
+            n_fav = sum(favoriteCount),
+            n_rt =  sum(retweetCount),
+            mean_fav = mean(favoriteCount),
+            mean_rt = mean(retweetCount)) %>%
+  filter(n_tweets >=  3)
+
+### Most favorited
+most_fav <- impact %>%
+  arrange(desc(n_fav)) %>%
+  slice(1:30)
+
+most_fav$screenName <- reorder(most_fav$screenName,
+                               most_fav$n_fav,
+                               sort)
+
+
+most_fav %>% 
+    transform(screenName = reorder(screenName, -n_fav)) %>% # Order descending
+    ggplot(aes(screenName, n_fav)) + 
+    geom_bar(stat = "identity") +
+    xlab("Usuario") +
+    ylab("Num. favoritos") +
+    theme_bw() + 
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+
+```{r,  echo=FALSE, eval = FALSE, include =FALSE, dpi=250}
+## Most retweeted
+
+most_rt <- impact %>%
+  arrange(desc(n_rt)) %>%
+  slice(1:30)
+
+most_rt$screenName <- reorder(most_rt$screenName,
+                              most_rt$n_rt,
+                              sort)
+
+
+most_fav %>% 
+    transform(screenName = reorder(screenName, -n_rt)) %>% # Order descending
+    ggplot(aes(screenName, n_rt)) + 
+    geom_bar(stat = "identity") +
+    xlab("Usuario") +
+    ylab("Num. retweets") +
+    theme_bw() + 
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+```{r echo=FALSE, dpi=250}
+
+### Mean favorites
+
+hi_mean_fav <- impact %>%
+  arrange(desc(mean_fav)) %>%
+  slice(1:30)
+
+hi_mean_fav$screenName <- reorder(hi_mean_fav$screenName,
+                                  hi_mean_fav$mean_fav,
+                                  sort)
+
+most_fav %>% 
+    transform(screenName = reorder(screenName, -mean_fav)) %>% # Order descending
+    ggplot(aes(screenName, mean_fav)) + 
+        ylab("Numero medio de favoritos") +
+    geom_bar(stat = "identity") +
+    theme_bw() + 
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+```{r echo=FALSE, dpi=250}
+
+### Mean retweets
+
+hi_mean_rt <- impact %>%
+  arrange(desc(mean_rt)) %>%
+  slice(1:30)
+
+hi_mean_rt$screenName <- reorder(hi_mean_rt$screenName,
+                                 hi_mean_rt$mean_rt,
+                                 sort)
+
+most_fav %>% 
+    transform(screenName = reorder(screenName, -mean_rt)) %>% # Order descending
+    ggplot(aes(screenName, mean_rt)) + 
+        ylab("Numero medio de retuits") +
+    geom_bar(stat = "identity") +
+    theme_bw() + 
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+```
+De hecho, si sumamos RTs y FAVs podemos calcular el impacto de una cuenta, y analizar si las cuentas con mayor impacto eran las que más tuitearon.
+
+```{r echo=F,dpi=250}
+impact %>% 
+        mutate(impact = n_fav + n_rt,
+               rel_impact = impact / n_tweets) %>%
+  arrange(-(impact)) %>% 
+        slice(1:30) %>%
+  transform(screenName = reorder(screenName, -n_tweets)) %>%
+  ggplot(aes(screenName, n_tweets, fill = rel_impact)) +
+  geom_bar(stat = "identity") +
+     xlab("Usuario") +
+    ylab("Numero de tuits") +
+  theme_bw() + theme(axis.text.x = element_text(angle = 45, hjust = 1))  + 
+  scale_fill_distiller(palette = "Spectral",
+                       trans = "log", breaks = c(1, 5, 10, 50),
+                       name="impacto/tweet")
+```
+
+De hecho, se ve que es precisamente al revés, y salvo la cuenta del Congreso, el impacto por tuit es menor para los usuarios que tuitean mucho. Y es que el que mucho abarca, poco aprieta, y uno no puede estar inspirado todo el rato.
+
+
+### Word cloud
+
+Estas fueron las 50 palabras más frecuentes en los tweets etiquetados con #CFE.
+
+```{r word-cloud, echo=FALSE, message=FALSE, warning= FALSE, dpi=250}
+library(wordcloud)
+
+pal <- wes_palette("Darjeeling", 8, type = "continuous") #brewer.pal(8, "Dark2")
+
+CFE_tweets %>%
+  filter(!isRetweet) %>%
+  .$text %>% paste(collapse = "") %>%
+  gsub("(@|\\#)\\w+", "", .) %>%  ## remove mentions/hashtags
+  gsub("https?\\:\\/\\/\\w+\\.\\w+(\\/\\w+)*", "", .) %>% ## remove urls
+  gsub("\\bdel\\b", "", .) %>% ## remove del
+  gsub("\\bcon\\b", "", .) %>% ## remove con
+  gsub("\\bpara\\b", "", .) %>% ## remove para
+  gsub("\\bpor\\b", "", .) %>% ## remove por
+  gsub("\\blas\\b", "", .) %>% ## remove las
+  gsub("\\bque\\b", "", .) %>% ## remove que
+  gsub("\\bsobre\\b", "", .) %>% ## remove sobre
+  gsub("\\bnos\\b", "", .) %>% ## remove nos
+  gsub("\\bcomo\\b", "", .) %>% ## remove como
+  gsub("\\buna\\b", "", .) %>% ## remove una
+  gsub("\\blos\\b", "", .) %>% ## remove los
+        gsub("\\bmas\\b", "", .) %>% ## remove mas
+  gsub("amp", "", .) %>%  ## remove &
+  gsub("\\bspp\\b", "species", .) %>% ## replace spp by species
+  wordcloud(max.words = 50, colors = pal, random.order = FALSE, scale = c(3, 0.5))
+
+```
+Pocas sorpresas, y tras la palabra "forestal", destacan otras como "incendios", "gestión", "taller" o "dehesas". En cambio, algunos de los lemas del congreso, como "bioeconomía" o "servicios ambientales", no aparecen entre las más citadas.
+
+### Menciones: twitter como plataforma de conversación
+
+La API de twitter nos permite rastrear la direccionalidad de las conversaciones, es decir, quien cita a quien en un tuit, y analizar por tanto qué usuarios han sido más mencionados, así como la dinámica de las menciones.
+
+```{r, echo =F, dpi=250}
+# Note: this approach does not capture conversations in the form of "quoted" retweets, as they appear as hyperlinks in the text field. This also does not count retweets as mentions.
+
+# Make a list of mentionees, index by mentioner
+mentions <- regmatches(original_CFE_tweets$text,
+                       gregexpr("@[-_A-Za-z0-9]+",
+                                original_CFE_tweets$text))
+mentions <- lapply(mentions, function(x) gsub("@", "", x)) # Strip off @
+names(mentions) <- original_CFE_tweets$screenName
+# Filter out non-mentioning tweets
+mentions <- mentions[lapply(mentions, length) > 0]
+
+# Who were the 30 most mentioned tweeters?
+data.frame(screenName = unlist(mentions)) %>% tbl_df %>% 
+ group_by(screenName) %>%
+ tally %>% arrange(-n) %>% slice(1:30) %>%
+  transform(screenName = reorder(screenName, -n)) %>%
+  ggplot(aes(screenName, n)) + geom_bar(stat = "identity") +
+  theme_bw() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+ 
+```
+
+Domina claramente, una vez más, la cuenta oficial del congreso, pero destaca el alto número de menciones que recibe Agresta, así como la Sociedad Española de Ciencias Forestales.
+
+
+### Twitter como red social
+
+Como decía antes, podemos rastrear la direccionalidad de las menciones, lo que permite explorar las dinámicas de conversación mediante análisis de redes y representarlas en un grafo, utilizando los paquetes de R igraph y visNetwork. Mediante un análisis cluster podemos agrupar dicho gráfico de interacciones en grupos lo más homogenéos posible, y el resultado sería un gráfico dinámico superchulo, pero que por desgracia parece no gustar tampoco a Wordpress, como en su día no gustó a Blogger, por lo que os dejo la versión estática y os animo a pasaros por mi GitHub para ver el dinámico. 
+
+```{r echo =FALSE, message=F, include =FALSE, warning = F}
+
+# Extract mentions as a vector of "from", "to", "from", "to"...
+edge_sequence <- lapply(seq_along(mentions), function(i) {
+  as.vector(rbind(rep(names(mentions)[[i]], length(mentions[[i]])),
+                  mentions[[i]]))
+  }) %>% unlist
+
+# Summarize from, to and number of mentions in a df
+edges <- data.frame(from = edge_sequence[seq(1, length(edge_sequence), 2)],
+                    to = edge_sequence[seq(2, length(edge_sequence), 2)],
+                    stringsAsFactors = F) %>% tbl_df %>%
+  group_by(from, to) %>% summarize(value = n())
+
+# Build a df for nodes
+nodes <- data.frame(id = unique(c(edges$from, edges$to)),
+                    label = unique(c(edges$from, edges$to)),
+                    stringsAsFactors = F) %>% tbl_df
+
+# Construct an igraph object of our mention graph
+library(igraph)
+mention_graph <- make_empty_graph() + vertices(nodes$id) +
+  edges(as.vector(rbind(edges$from, edges$to)), value = edges$value)
+
+# Calculate centrality of our nodes with PageRank (scaled a bit)
+V(mention_graph)$value <- page_rank(mention_graph, weights = E(mention_graph)$value)[[1]] - 0.0013 
+
+# Did a user use the #ISME16 hashtag?
+V(mention_graph)$group <- ifelse(V(mention_graph)$name %in% original_CFE_tweets$screenName, "HashtagUser", "NonHashtagUser")
+
+# Visualize it! In this visualization, blue nodes are people who used the #ISME16 hashtag, and yellow are those who didn't. An arrow is drawn from one node to another if the first node mentions the second in a tweet with the #ISME16 hashtag. Nodes are sized by PageRank.
+library(visNetwork)
+mention_graph_vn <- toVisNetworkData(mention_graph)
+ visNetwork(nodes = mention_graph_vn$nodes, edges = mention_graph_vn$edges,
+           width = "100%", height = "600px") %>%
+  visIgraphLayout(physics = T, smooth = T) %>%
+  visEdges(arrows = "to") %>%
+  visOptions(highlightNearest = TRUE)
+
+
+
+```
+Podemos destacar por ejemplo el papel central de la cuenta del congreso, que recibe numerosas menciones (muchas flechas van hacia su nodo), y el caso contrario sería la cuenta de Fuego_Lab, de la que salen numerosas flechas. Otras cuentas reciben tanto como emiten, y algunas incluso destacan por las "autocitas". Es decir, que se mencionan a sí mismos. Respecto a los "grupos" creados, hay que decir que los creé de manera automática, sin control alguno, por lo que los resultados pueden ser un tanto irregulares. De todas formas, se ve de manera bastante clara una "comunidad" insitucional, en amarillo, que engloba la cuenta del congreso, de la SECF, el Ministerio, Confemadera, etc; otra en verde que parece girar en torno a la cuenta de Agresta, y una muy grande y heterogénea, en rojo oscuro, donde hay muchas cuentas, incluida la mía. Sin tener mucha idea de este tipo de análisis, creo que se podría interpretar que en el sector forestal en internet, lejos de haber numerosos grupos cerrados entre sí, parece haber bastante interconexión, lo que entiendo que es buen síntoma.
+
+
+
+```{r echo =F, warning = FALSE}
+cw <- cluster_walktrap(mention_graph)
+
+
+V(mention_graph)$group <- membership(cw)
+mention_graph_vn <- toVisNetworkData(mention_graph)
+visNetwork(nodes = mention_graph_vn$nodes, edges = mention_graph_vn$edges,
+           width = "100%", height = "600px") %>%
+  visIgraphLayout(physics = T, smooth = T) %>%
+  visEdges(arrows = "to") %>%
+  visOptions(highlightNearest = TRUE)
+```
+
+
+Como ya dije en las entradas anteriores, os animo a que os busquéis y me digáis si os sorprende ver con quién habéis interactuado y en que grupo habéis caido!
+
+
+Hasta aquí llega mi análisis del 7CFE, espero que os haya resultado interesante. Pero antes de acabar quiero recalcar una vez más mi agradecimiento a aquellos que han generado el código original en el que me he basado, incluyendo [François Michonneau](https://github.com/fmichonneau), [Joona Lehtomaki](https://twitter.com/jlehtoma), y [Emily J. Rollinson](http://rollinsonecology.com/), así como  [Keith H.Turner](http://twitter.com/kay_aych). Recuerdo también que la entrada ha sido generada con rmarkdown, esta disponible en GitHub y tiene, como el código asociado, una [licencia CC0](https://creativecommons.org/choose/zero/?lang=es_ES).
+
+Nos vemos en el #8CFE!
+

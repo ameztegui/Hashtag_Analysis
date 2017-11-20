@@ -1,5 +1,5 @@
 ---
-title: 'Congresos científicos y Twitter (I): un análisis de #AEETMED'
+title: 'Congresos cient?ficos y Twitter (I): un an?lisis de #AEETMED'
 output:
   html_document: default
 ---
@@ -27,14 +27,14 @@ ICOPFIRES_raw_tweets$created <- as_datetime(ICOPFIRES_raw_tweets$created)
 
 
 
-La semana pasada se celebraron a la vez dos congresos a los que no me hubiera importado para nada asistir. Por un lado, se celebró en Sevilla, del 31 de enero al 4 de febrero, el [Congreso de la Asociación Española de Ecología Terrestre (AEET)](http://www.medecos-aeet-meeting2017.es/), que este año iba en conjunto con MEDECOS, el congreso que organiza la International Society of Mediterranean Ecology. Por otro lado, la Fundación Pau Costa organizaba en Barcelona ICOPFIRES, el [Congreso Internacional sobre Quemas Prescritas](http://www.paucostafoundation.org/ICoPFires/), que este año se hizo coincidir además con la [Wildland Fire Safety Summit](http://www.paucostafoundation.org/ICoPFires/wildland-fire-safety-summit/).
+La semana pasada se celebraron a la vez dos congresos a los que no me hubiera importado para nada asistir. Por un lado, se celebr? en Sevilla, del 31 de enero al 4 de febrero, el [Congreso de la Asociaci?n Espa?ola de Ecolog?a Terrestre (AEET)](http://www.medecos-aeet-meeting2017.es/), que este a?o iba en conjunto con MEDECOS, el congreso que organiza la International Society of Mediterranean Ecology. Por otro lado, la Fundaci?n Pau Costa organizaba en Barcelona ICOPFIRES, el [Congreso Internacional sobre Quemas Prescritas](http://www.paucostafoundation.org/ICoPFires/), que este a?o se hizo coincidir adem?s con la [Wildland Fire Safety Summit](http://www.paucostafoundation.org/ICoPFires/wildland-fire-safety-summit/).
 
-Como os decía, hubiera encontrado cualquiera de los dos muy interesante, porque además en cualquiera de ellos tenía numerosos colegas - aunque más en Sevilla, donde además el lab estuvo representado por [este póster](https://twitter.com/ctforestal/status/826833160134606850). Por suerte, los que nos tuvimos que quedar en casa contamos hoy en día con herramientas para ir siguiendo los momentos más interesantes de los congresos, y una de las más ágiles en este sentido es sin duda twitter. Los dos congresos tuvieron la buena iniciativa de definir con antelación un hashtag claro, [#AEETMED](https://twitter.com/search?q=%23AEETMED&src=tyah) para el de Sevilla, [#iCOPFires](https://twitter.com/search?q=%23icopfires&src=typd) para el de Barcelona, y así muchos pudimos seguir desde nuestro ordenador o móvil los momentos más destacados.
+Como os dec?a, hubiera encontrado cualquiera de los dos muy interesante, porque adem?s en cualquiera de ellos ten?a numerosos colegas - aunque m?s en Sevilla, donde adem?s el lab estuvo representado por [este p?ster](https://twitter.com/ctforestal/status/826833160134606850). Por suerte, los que nos tuvimos que quedar en casa contamos hoy en d?a con herramientas para ir siguiendo los momentos m?s interesantes de los congresos, y una de las m?s ?giles en este sentido es sin duda twitter. Los dos congresos tuvieron la buena iniciativa de definir con antelaci?n un hashtag claro, [#AEETMED](https://twitter.com/search?q=%23AEETMED&src=tyah) para el de Sevilla, [#iCOPFires](https://twitter.com/search?q=%23icopfires&src=typd) para el de Barcelona, y as? muchos pudimos seguir desde nuestro ordenador o m?vil los momentos m?s destacados.
 
-Pero ¿cuál fue la repercusión de estos eventos en twitter? ¿Cuándo y quién tuiteó desde los congresos? ¿Quiénes fueron los tuiteros más activos? Es lo que me pretendo analizar hoy, aprovechando que se puede extraer fácilmente la información a partir de la API de Twitter. Antes de meternos en harina, quiero dejar claro que el código que he utilizado para descargar los tuits y analizar las tendencias no es originalmente mío, sino una adaptación de diversas fuentes, en concreto [ésta](https://github.com/fmichonneau/evol2015-tweets), [ésta](https://github.com/jlehtoma/iccb2015-tweets/blob/gh-pages/index.Rmd), [ésta](http://rollinsonecology.com) y [ésta](https://github.com/khturner/HashtagISME16) Los tweets que incluian el hashtag #AEETMED o #ICOPFires se recopilaron de la API de RTwitter mediante el paquete [twitteR](https://cran.r-project.org/web/packages/twitteR/index.html) y la entrada la he escrito utilizando RMarkdown, y el codigo fuente y los datos 
-están [disponibles en mi GitHub](https://github.com/ameztegui/Hashtag_Analysis). Dicho esto, al lío.
+Pero ?cu?l fue la repercusi?n de estos eventos en twitter? ?Cu?ndo y qui?n tuite? desde los congresos? ?Qui?nes fueron los tuiteros m?s activos? Es lo que me pretendo analizar hoy, aprovechando que se puede extraer f?cilmente la informaci?n a partir de la API de Twitter. Antes de meternos en harina, quiero dejar claro que el c?digo que he utilizado para descargar los tuits y analizar las tendencias no es originalmente m?o, sino una adaptaci?n de diversas fuentes, en concreto [?sta](https://github.com/fmichonneau/evol2015-tweets), [?sta](https://github.com/jlehtoma/iccb2015-tweets/blob/gh-pages/index.Rmd), [?sta](http://rollinsonecology.com) y [?sta](https://github.com/khturner/HashtagISME16) Los tweets que incluian el hashtag #AEETMED o #ICOPFires se recopilaron de la API de RTwitter mediante el paquete [twitteR](https://cran.r-project.org/web/packages/twitteR/index.html) y la entrada la he escrito utilizando RMarkdown, y el codigo fuente y los datos 
+est?n [disponibles en mi GitHub](https://github.com/ameztegui/Hashtag_Analysis). Dicho esto, al l?o.
 
-Según los organizadores, el iCOPFires acogió en total a unos 500 asistentes, mientras que AEETMED reunió a unos 600.  En cuanto a número de tuits generados la cosa anduvo bastante pareja, como se ve en esta tabla.
+Seg?n los organizadores, el iCOPFires acogi? en total a unos 500 asistentes, mientras que AEETMED reuni? a unos 600.  En cuanto a n?mero de tuits generados la cosa anduvo bastante pareja, como se ve en esta tabla.
 
 ```{r echo=F}
 
@@ -55,12 +55,12 @@ ICOPFIRES_tweets <- ICOPFIRES_raw_tweets %>%
 |Numeros de usuarios que han tuiteado: | `r length(unique(AEETMED_tweets$screenName))`|`r length(unique(ICOPFIRES_tweets$screenName))`|
 
 
-A partir de aquí, como no quiero que esto se convierta en una competicion entre ambos congresos, los analizaré por separado, en dos entradas distintas. Hoy nos centraremos en el congreso de la AEET, y mañana o pasado publicaré el análisis de ICOPFires.
+A partir de aqu?, como no quiero que esto se convierta en una competicion entre ambos congresos, los analizar? por separado, en dos entradas distintas. Hoy nos centraremos en el congreso de la AEET, y ma?ana o pasado publicar? el an?lisis de ICOPFires.
 
 
 #### Actividad durante la semana
 
-Como la API permite importar la fecha y hora del tuit, podemos ver en qué momentos se produjo más actividad.
+Como la API permite importar la fecha y hora del tuit, podemos ver en qu? momentos se produjo m?s actividad.
 
 ```{r echo =FALSE, dpi = 250}
 
@@ -81,7 +81,7 @@ AEETMED_tweets %>%
 
 ```
 
-Vemos que en el grueso de actividad se produjo el jueves y el viernes, y además parece que la proporción de retuits fue más alta por la tarde, veamos si es así:
+Vemos que en el grueso de actividad se produjo el jueves y el viernes, y adem?s parece que la proporci?n de retuits fue m?s alta por la tarde, veamos si es as?:
 
 
 ```{r echo=FALSE, warning=FALSE, dpi =250}
@@ -102,7 +102,7 @@ AEETMED_tweets %>% group_by(bin) %>%
 
 ```
 
-Efectivamente, el ratio retweets/tweets originales es más alto por la tarde, y es que no éramos pocos los que consultábamos los **highlights** de la jornada al llegar a casa por la tarde, retuiteando lo que nos parecia mas interesante. De entre los `r nrow(AEETMED_tweets)` tuits con la etiqueta #AEETMED que se generaron durante la semana pasada, estos fueron los 3 más retuiteados:
+Efectivamente, el ratio retweets/tweets originales es m?s alto por la tarde, y es que no ?ramos pocos los que consult?bamos los **highlights** de la jornada al llegar a casa por la tarde, retuiteando lo que nos parecia mas interesante. De entre los `r nrow(AEETMED_tweets)` tuits con la etiqueta #AEETMED que se generaron durante la semana pasada, estos fueron los 3 m?s retuiteados:
 
 ```{r top-rt, echo=FALSE, results='asis'}
 render_tweet <- function(dt, row) {
@@ -139,7 +139,7 @@ for (i in seq_len(nrow(top_rt))) {
 }
 ```
 
-Y estos los 3 más marcados como favoritos:
+Y estos los 3 m?s marcados como favoritos:
 
 ```{r top-fav, echo=FALSE, results='asis'}
 top_fav <- data.frame(AEETMED_tweets %>%
@@ -154,9 +154,9 @@ for (i in seq_len(nrow(top_fav))) {
 
 ```
 
-#### Tuiteros más activos
+#### Tuiteros m?s activos
 
-Veamos quienes fueron los más activos de entre los `r length(unique(ICOPFIRES_tweets$screenName))` usuarios que tuitearon sobre el congreso utilizando la etiqueta oficial. 
+Veamos quienes fueron los m?s activos de entre los `r length(unique(ICOPFIRES_tweets$screenName))` usuarios que tuitearon sobre el congreso utilizando la etiqueta oficial. 
 
 ```{r echo = FALSE, dpi = 250}
 # Todos los tweets
@@ -206,12 +206,12 @@ top_orig_users %>% slice(1:30) %>%
 
 ```
 
-Si consideramos todos los tuits, las más prolíficas fueron la cuenta de la [AEET](http://twitter.com/_AEET_) y la de la paleontóloga [AR Gómez-Cano](http://twitter.com/argcPALEO). En cambio, si sólo consideramos los tuits originales, gana por goleada la paleoecóloga [Graciela Gil Romera](http://twitter.com/gilromera), con más de 40 tuits durante el congreso. Parece que lo *paleo* estuvo muy activo.
+Si consideramos todos los tuits, las m?s prol?ficas fueron la cuenta de la [AEET](http://twitter.com/_AEET_) y la de la paleont?loga [AR G?mez-Cano](http://twitter.com/argcPALEO). En cambio, si s?lo consideramos los tuits originales, gana por goleada la paleoec?loga [Graciela Gil Romera](http://twitter.com/gilromera), con m?s de 40 tuits durante el congreso. Parece que lo *paleo* estuvo muy activo.
 
 
-### Usuarios más populares
+### Usuarios m?s populares
 
-Podemos ver qué usuarios tuvieron más repercusión analizando la media de RT y FAVs que recibió cada usuario. (Nota: las figuras de abajo solo incluyen usuarios que han tuiteado mas de 3 veces, y no incluyen retuits).
+Podemos ver qu? usuarios tuvieron m?s repercusi?n analizando la media de RT y FAVs que recibi? cada usuario. (Nota: las figuras de abajo solo incluyen usuarios que han tuiteado mas de 3 veces, y no incluyen retuits).
 
 
 ```{r, echo=FALSE, include =FALSE, dpi=250}
@@ -312,9 +312,9 @@ most_fav %>%
 
 
 ```
-Parece que no hay grandes "superestrellas" que concentren la mayor parte de los RT y FAVs, sino que hay un gradiente bastante suave, aunque destacan perfiles de ecólogos muy reconocidos como [JC Svenning](http://twitter.com/JCSvenning), [Fernando Maestre](http://twitter.com/Maestrelab) o [Pedro Jordano](http://twitter.com/pedro_jordano), entre otros.
+Parece que no hay grandes "superestrellas" que concentren la mayor parte de los RT y FAVs, sino que hay un gradiente bastante suave, aunque destacan perfiles de ec?logos muy reconocidos como [JC Svenning](http://twitter.com/JCSvenning), [Fernando Maestre](http://twitter.com/Maestrelab) o [Pedro Jordano](http://twitter.com/pedro_jordano), entre otros.
 
-De hecho podríamos juntar RT + Favs como un indicador del impacto, y ver si los que más impacto tuvieron son también los que más tuitearon
+De hecho podr?amos juntar RT + Favs como un indicador del impacto, y ver si los que m?s impacto tuvieron son tambi?n los que m?s tuitearon
 ```{r echo=F,dpi=250}
 impact %>% 
         mutate(impact = n_fav + n_rt,
@@ -332,12 +332,12 @@ impact %>%
                        name="impacto/tweet")
 ```
 
-En líneas generales vemos que no es así, y que no parece haber relación entre el número de tuits y el impacto medio de cada tuit.
+En l?neas generales vemos que no es as?, y que no parece haber relaci?n entre el n?mero de tuits y el impacto medio de cada tuit.
 
 
 ### Word cloud
 
-Estas fueron las 50 palabras más frecuentes en los tweets etiquetados con #AEETMED
+Estas fueron las 50 palabras m?s frecuentes en los tweets etiquetados con #AEETMED
 
 ```{r word-cloud, echo=FALSE, message=FALSE, dpi=250}
 library(wordcloud)
@@ -356,11 +356,11 @@ AEETMED_tweets %>%
   wordcloud(max.words = 50, colors = pal, random.order = FALSE, scale = c(3, 0.5))
 
 ```
- Parece que efectivamente, en Sevilla hubo "grandes charlas" ;-), pero se voislumbra por aquí algunos de los temas estrella que ya ha definido Ignasi Bartomeus en el [blog de Journal of Ecology](https://jecologyblog.wordpress.com/2017/02/07/aaet-medecos/): sequía, fuego, e interacciones entre especies.
+ Parece que efectivamente, en Sevilla hubo "grandes charlas" ;-), pero se voislumbra por aqu? algunos de los temas estrella que ya ha definido Ignasi Bartomeus en el [blog de Journal of Ecology](https://jecologyblog.wordpress.com/2017/02/07/aaet-medecos/): sequ?a, fuego, e interacciones entre especies.
 
-### Menciones: twitter como plataforma de conversación
+### Menciones: twitter como plataforma de conversaci?n
 
-Una de las cosas buenas de twitter es cuando se montan debates entre varios usuarios sobre un tema concreto, a veces muy interesantes a pesar de lo limitado de los 140 caracteres, y de hecho no sería la primera vez que una de esas conversaciones deriva en un post de Forestalia. Usando las capacidades de las expresiones regulares (regexp) podemos identificar los usuarios que fueron mencionados más a menudo durante el congreso. 
+Una de las cosas buenas de twitter es cuando se montan debates entre varios usuarios sobre un tema concreto, a veces muy interesantes a pesar de lo limitado de los 140 caracteres, y de hecho no ser?a la primera vez que una de esas conversaciones deriva en un post de Forestalia. Usando las capacidades de las expresiones regulares (regexp) podemos identificar los usuarios que fueron mencionados m?s a menudo durante el congreso. 
 
 ```{r, echo =F, dpi=250}
 # Note: this approach does not capture conversations in the form of "quoted" retweets, as they appear as hyperlinks in the text field. This also does not count retweets as mentions.
@@ -384,12 +384,12 @@ data.frame(screenName = unlist(mentions)) %>% tbl_df %>%
  
 ```
 
-Pues aparte de los organizadores, y la Universidad de Sevilla, institución donde se celebró, parece que los usuarios más mencionados fueron F.Maestre y el grupo de paleocología y vertebrados de UCM y CSIC. Â¡Otra vez la *paleo*!
+Pues aparte de los organizadores, y la Universidad de Sevilla, instituci?n donde se celebr?, parece que los usuarios m?s mencionados fueron F.Maestre y el grupo de paleocolog?a y vertebrados de UCM y CSIC. ??Otra vez la *paleo*!
 
 
 ### Twitter como red social
 
-Lo que hace únicas a las menciones de twitter respecto a otras redes sociales como facebook, es que se pueden rastrear las menciones de ida y vuelta. Por lo tanto, una vez extraídas las menciones podemos explorar las dinámicas de las conversaciones mediante un grafo, representando cada usuario como un vértice y las menciones como las aristas entre los vértices. Aquí quiero mencionar expresamente que esta parte del código está tomada del análisis que hizo [Keith H.Turner](http://twitter.com/kay_aych) para el [ISME2016](https://github.com/khturner/HashtagISME16). La pena es que blogger no me permite insertar un gráfico interactivo como el que generan estas funciones, así que los que queráis verlo tendréis que ir a GitHub.
+Lo que hace ?nicas a las menciones de twitter respecto a otras redes sociales como facebook, es que se pueden rastrear las menciones de ida y vuelta. Por lo tanto, una vez extra?das las menciones podemos explorar las din?micas de las conversaciones mediante un grafo, representando cada usuario como un v?rtice y las menciones como las aristas entre los v?rtices. Aqu? quiero mencionar expresamente que esta parte del c?digo est? tomada del an?lisis que hizo [Keith H.Turner](http://twitter.com/kay_aych) para el [ISME2016](https://github.com/khturner/HashtagISME16). La pena es que blogger no me permite insertar un gr?fico interactivo como el que generan estas funciones, as? que los que quer?is verlo tendr?is que ir a GitHub.
 
 ```{r echo =FALSE, message=F, warning = F}
 
@@ -434,9 +434,9 @@ mention_graph_vn <- toVisNetworkData(mention_graph)
 
 ```
 
-La verdad es que hay mucha información en este gráfico. Destaca que una buena parte de las conversaciones pasó por la cuenta oficial de la AEET, y también llaman la atención unas pocas cuentas que parecen tener una importante red de contactos en twitter (F.Maestre, JC. Svenning, P. Jordano, G. Gil-Romera) frente a las cuentas de los exteriores, que difundieron información sobre el congreso (por eso aparecen en azul) a numerosas personas que sólo recibieron menciones, pero no tuitearon (en amarillo).
+La verdad es que hay mucha informaci?n en este gr?fico. Destaca que una buena parte de las conversaciones pas? por la cuenta oficial de la AEET, y tambi?n llaman la atenci?n unas pocas cuentas que parecen tener una importante red de contactos en twitter (F.Maestre, JC. Svenning, P. Jordano, G. Gil-Romera) frente a las cuentas de los exteriores, que difundieron informaci?n sobre el congreso (por eso aparecen en azul) a numerosas personas que s?lo recibieron menciones, pero no tuitearon (en amarillo).
 
-Incluso podríamos aplicar análisis de cluster de grafos para ver en cuantos grupos se puede clasificar la tuitesfera del AEETMED.
+Incluso podr?amos aplicar an?lisis de cluster de grafos para ver en cuantos grupos se puede clasificar la tuitesfera del AEETMED.
 
 ```{r echo =F, warning = FALSE}
 cw <- cluster_walktrap(mention_graph)
@@ -451,13 +451,13 @@ visNetwork(nodes = mention_graph_vn$nodes, edges = mention_graph_vn$edges,
   visOptions(highlightNearest = TRUE)
 ```
 
-Usando los parámetros por defecto de la función random walk, el grafo de menciones se divide en 23 grupos distintos, algunos muy numerosos, otros formados sólo por dos usuarios. Es un gráfico superchulo, donde se puede ver como los colegas de la misma institución tienden a agruparse juntos, mientras que hay individuos que aparecen como puentes entre dos grupos más amplios. Os animo a que os busquéis y valoreis si el algortimos os ha clasificado bien u os habeis llevado una sorpresa. La verdad es que ver los datos asi hace valorar el paper de tuiter como difusor de la actividad en una conferencia!.
+Usando los par?metros por defecto de la funci?n random walk, el grafo de menciones se divide en 23 grupos distintos, algunos muy numerosos, otros formados s?lo por dos usuarios. Es un gr?fico superchulo, donde se puede ver como los colegas de la misma instituci?n tienden a agruparse juntos, mientras que hay individuos que aparecen como puentes entre dos grupos m?s amplios. Os animo a que os busqu?is y valoreis si el algortimos os ha clasificado bien u os habeis llevado una sorpresa. La verdad es que ver los datos asi hace valorar el paper de tuiter como difusor de la actividad en una conferencia!.
 
 
 
 NOTA FINAL:
-El codigo para generar el documento fue desarrollado originalmente por [Francois Michonneau](https://github.com/fmichonneau) ([fmic_](https://twitter.com/fmic_) en Twitter) para el congreso de Evolución de 2015, y se puede encontrar [aqu?](https://github.com/fmichonneau/evol2015-tweets). El codigo ha sido posteriormente  [modificado](https://github.com/jlehtoma/iccb2015-tweets/blob/gh-pages/index.Rmd) para el congreso ICCB-ECCB 2015 por Joona Lehtomaki ([jlehtoma](https://twitter.com/jlehtoma) en Twitter), y por [Emily J. Rollinson](http://rollinsonecology.com) ([ejrollinson](https://twitter.com/ejrollinson) en Twitter), para los congresos de la Ecological Society of America de 2015 (Baltimore, #ESA100), y de 2016 (Fort Lauderdale, Florida, #ESA2016). También he incorporado algunos elementos del análisis de redes que hizo [Keith H.Turner](http://twitter.com/kay_aych) para el [ISME2016](https://github.com/khturner/HashtagISME16).
+El codigo para generar el documento fue desarrollado originalmente por [Francois Michonneau](https://github.com/fmichonneau) ([fmic_](https://twitter.com/fmic_) en Twitter) para el congreso de Evoluci?n de 2015, y se puede encontrar [aqu?](https://github.com/fmichonneau/evol2015-tweets). El codigo ha sido posteriormente  [modificado](https://github.com/jlehtoma/iccb2015-tweets/blob/gh-pages/index.Rmd) para el congreso ICCB-ECCB 2015 por Joona Lehtomaki ([jlehtoma](https://twitter.com/jlehtoma) en Twitter), y por [Emily J. Rollinson](http://rollinsonecology.com) ([ejrollinson](https://twitter.com/ejrollinson) en Twitter), para los congresos de la Ecological Society of America de 2015 (Baltimore, #ESA100), y de 2016 (Fort Lauderdale, Florida, #ESA2016). Tambi?n he incorporado algunos elementos del an?lisis de redes que hizo [Keith H.Turner](http://twitter.com/kay_aych) para el [ISME2016](https://github.com/khturner/HashtagISME16).
 
-Los tweets que incluian el hashtag #AEETMED se recopilaron mediante el paquete [twitteR](https://cran.r-project.org/web/packages/twitteR/index.html) a partir de la API de Twitter. El documento se generó mediante RMarkdown, y el código fuente y los datos están
- [disponibles en mi GitHub](https://github.com/ameztegui/Hashtag_Analysis). El documento, así como el código asociado, tienen una [licencia CC0](https://creativecommons.org/choose/zero/?lang=es_ES).
+Los tweets que incluian el hashtag #AEETMED se recopilaron mediante el paquete [twitteR](https://cran.r-project.org/web/packages/twitteR/index.html) a partir de la API de Twitter. El documento se gener? mediante RMarkdown, y el c?digo fuente y los datos est?n
+ [disponibles en mi GitHub](https://github.com/ameztegui/Hashtag_Analysis). El documento, as? como el c?digo asociado, tienen una [licencia CC0](https://creativecommons.org/choose/zero/?lang=es_ES).
 
